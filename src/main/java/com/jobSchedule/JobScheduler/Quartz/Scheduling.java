@@ -9,7 +9,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.time.ZoneOffset;
+import java.time.ZonedDateTime;
 import java.util.Date;
 import java.util.UUID;
 @Component
@@ -58,11 +60,13 @@ public class Scheduling {
                 .build();
     }
     private Trigger buildJobTrigger(JobDetail jobDetail, LocalDateTime startAt) {
+        ZonedDateTime zdt = startAt.atZone(ZoneId.systemDefault());
+        Date date = Date.from(zdt.toInstant());
         return TriggerBuilder.newTrigger()
                 .forJob(jobDetail)
                 .withIdentity(jobDetail.getKey().getName(), "my-triggers")
                 .withDescription("Send Rest Trigger")
-                .startNow()
+                .startAt(date)
                 .withSchedule(SimpleScheduleBuilder.simpleSchedule().withMisfireHandlingInstructionFireNow())
                 .build();
     }

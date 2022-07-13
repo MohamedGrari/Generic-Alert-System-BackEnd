@@ -16,4 +16,6 @@ public class ScheduleRequest {
 
     @NotNull
     private LocalDateTime localDateTime;
+    private String jobText;
+    private String jobAlertMode;
 }

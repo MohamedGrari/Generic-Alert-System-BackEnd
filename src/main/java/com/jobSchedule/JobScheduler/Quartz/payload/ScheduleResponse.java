@@ -2,9 +2,11 @@ package com.jobSchedule.JobScheduler.Quartz.payload;
 
 import lombok.Getter;
 import lombok.Setter;
+import lombok.ToString;
 
 @Getter
 @Setter
+@ToString
 public class ScheduleResponse {
     private boolean success;
     private String jobId;
