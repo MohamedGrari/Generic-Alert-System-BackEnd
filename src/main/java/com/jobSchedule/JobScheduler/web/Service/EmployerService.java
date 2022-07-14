@@ -10,7 +10,7 @@ import java.util.List;
 import java.util.Optional;
 
 @Service
-@Transactional
+//@Transactional
 public class EmployerService {
     final EmployerRepo employerRepo;
     @Autowired
@@ -26,6 +26,7 @@ public class EmployerService {
     public Employer saveEmployer(Employer employer){
         return employerRepo.save(employer);
     }
+    //@Transactional
     public Employer updateEmployer(Employer employer) {
         return employerRepo.save(employer);
     }

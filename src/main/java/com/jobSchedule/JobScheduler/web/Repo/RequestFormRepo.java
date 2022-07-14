@@ -10,6 +10,6 @@ import java.util.List;
 public interface RequestFormRepo extends JpaRepository<RequestForm, Long> {
 
     List<RequestForm> findRequestFormsByEntityAndEntityCriteriaValue(String entity, String entityCriteriaValue);
-
+    List<RequestForm> findRequestFormsByEntity(String entity);
     public List<RequestForm> findRequestFormByEntityAndAttribute(String entity, String attribute);
 }

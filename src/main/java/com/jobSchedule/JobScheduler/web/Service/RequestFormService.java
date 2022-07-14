@@ -29,7 +29,9 @@ public class RequestFormService {
     public RequestForm saveRequestForm(RequestForm requestForm){
         return requestFormRepo.save(requestForm);
     }
-
+    public List<RequestForm> findByEntity(String entity){
+        return requestFormRepo.findRequestFormsByEntity(entity);
+    }
     public List<RequestForm> findByEntityAndAttribute(String entity, String attribute){
         return requestFormRepo.findRequestFormByEntityAndAttribute(entity, attribute);
     }
