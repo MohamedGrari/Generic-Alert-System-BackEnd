@@ -57,51 +57,7 @@ public class EntityListener {
         String position = employer.getPosition();
         String status = employer.getStatus();
         String contractType = employer.getContractType();
-        //List<String> criteria =;
-        //String[] criteria = {employer.getPosition(), employer.getStatus(), employer.getContractType(), "WHATEVER"};
-//        Map<String, String> criteria = new HashMap<>();
-//        criteria.put("position", employer.getPosition());
-//        criteria.put("status", employer.getStatus());
-//        criteria.put("contractType", employer.getContractType());
-        //if (Objects.equals(position, "SENIOR")) {
         updater(position, status, contractType, scheduleRequest, requests, logger, scheduling);
-        //
-//        if (Objects.equals(position, "MANAGER")) {
-//            updater(employer, scheduleRequest, requests, logger, scheduling, position);
-//        }
-//
-//        if (Objects.equals(position, "JUNIOR")) {
-//            updater(employer, scheduleRequest, requests, logger, scheduling, position);
-//        }
-//
-//        if (Objects.equals(position, "RH")) {
-//            updater(employer, scheduleRequest, requests, logger, scheduling, position);
-//        }
-//
-//        if (Objects.equals(position, "INTERN")) {
-//            updater(employer, scheduleRequest, requests, logger, scheduling, position);
-//        }
-//
-//        if (Objects.equals(status, "ON")) {
-//            updater(employer, scheduleRequest, requests, logger, scheduling, status);
-//        }
-//
-//        if (Objects.equals(status, "OFF")) {
-//            updater(employer, scheduleRequest, requests, logger, scheduling, status);
-//        }
-//
-//        if (Objects.equals(contractType, "CDI")) {
-//            updater(employer, scheduleRequest, requests, logger, scheduling, contractType);
-//        }
-//
-//        if (Objects.equals(contractType, "CDD")) {
-//            updater(employer, scheduleRequest, requests, logger, scheduling, contractType);
-//        }
-//
-//        if (Objects.equals(contractType, "FREELANCE")) {
-//            updater(employer, scheduleRequest, requests, logger, scheduling, contractType);
-//
-//        }
     }
 
     @PrePersist
@@ -217,77 +173,45 @@ public class EntityListener {
     private void updater(String position, String status, String contractType, ScheduleRequest scheduleRequest, List<RequestForm> requests, Logger logger, Scheduling scheduling) {
         Long offset = 2L;
         String[] entityCriteria = {position, status, contractType, null};
-        String[] attributeCriteria = {"position", "status", "contractType", "WHATEVER"};
+        boolean isNotChangedPosition = Objects.equals(position, oldPosition);
+        boolean isNotChangedStatus = Objects.equals(status, oldStatus);
+        boolean isNotChangedContractType = Objects.equals(contractType, oldContractType);
         for (RequestForm requestForm : requests) {
-            if (!(Arrays.asList(entityCriteria).contains(requestForm.getEntityCriteriaValue()))) {
-                continue;
+            String wantedAttributeValue = requestForm.getWantedAttributeValue();
+            boolean wantedAttributeValueIsWHATEVER = (Objects.equals(wantedAttributeValue, "WHATEVER"));
+            if (!Arrays.asList(entityCriteria).contains(requestForm.getEntityCriteriaValue())) {continue;}
+            switch (requestForm.getAttribute()) {
+                case "position":
+                    if (isNotChangedPosition) {continue;}
+                    if ((wantedAttributeValueIsWHATEVER) || (Objects.equals(wantedAttributeValue, position))) {
+                        runScheduler(scheduleRequest,logger,scheduling,offset, requestForm);}
+                    break;
+                case "status":
+                    if (isNotChangedStatus) {continue;}
+                    if ((wantedAttributeValueIsWHATEVER) || (Objects.equals(wantedAttributeValue, status))) {
+                        runScheduler(scheduleRequest,logger,scheduling,offset, requestForm); }
+                    break;
+                case "contractType":
+                    if (isNotChangedContractType) {continue;}
+                    if ((wantedAttributeValueIsWHATEVER) || (Objects.equals(wantedAttributeValue, contractType))) {
+                        runScheduler(scheduleRequest,logger,scheduling,offset, requestForm);}
+                    break;
+                case "WHATEVER":
+                    if (isNotChangedPosition && isNotChangedStatus && isNotChangedContractType) {
+                        continue;
+                    }
+                    runScheduler(scheduleRequest,logger,scheduling,offset, requestForm);
+                    break;
             }
-            if (!(Arrays.asList(attributeCriteria).contains(requestForm.getAttribute()))) {
-                continue;
-            }
-            scheduleRequest.setJobText(requestForm.getText());
-            scheduleRequest.setJobAlertMode(requestForm.getAlertMode());
-            scheduleRequest.setJobAlertMode(requestForm.getAlertMode());
-            scheduleRequest.setLocalDateTime(LocalDateTime.now());
-            if (Objects.equals(requestForm.getAttribute(), "WHATEVER")){
-                scheduleRequest.setLocalDateTime(LocalDateTime.now().plusMinutes(offset));
-                System.out.println("scheduleRequest = " + scheduleRequest);
-                ScheduleResponse scheduleResponse = scheduling.createSchedule(scheduleRequest);
-                logger.info("5edmet");
-                System.out.println("requestForm = " + requestForm);
-                System.out.println("scheduling = " + scheduleResponse);
-                continue;
-            }
-            if (Objects.equals(requestForm.getWantedAttributeValue(), "WHATEVER")) {
-                if ((Objects.equals(requestForm.getAttribute(), "position")) && (!Objects.equals(position, oldPosition))) {
-                    scheduleRequest.setLocalDateTime(LocalDateTime.now().plusMinutes(offset));
-                    System.out.println("scheduleRequest = " + scheduleRequest);
-                    ScheduleResponse scheduleResponse = scheduling.createSchedule(scheduleRequest);
-                    logger.info("5edmet");
-                    System.out.println("requestForm = " + requestForm);
-                    System.out.println("scheduling = " + scheduleResponse);
-                    continue;
-                } else if ((Objects.equals(requestForm.getAttribute(), "status")) && (!Objects.equals(status, oldStatus))) {
-                    scheduleRequest.setLocalDateTime(LocalDateTime.now().plusMinutes(offset));
-                    System.out.println("scheduleRequest = " + scheduleRequest);
-                    ScheduleResponse scheduleResponse = scheduling.createSchedule(scheduleRequest);
-                    logger.info("5edmet");
-                    System.out.println("requestForm = " + requestForm);
-                    System.out.println("scheduling = " + scheduleResponse);
-
-                }else if ((Objects.equals(requestForm.getAttribute(), "contractType")) && (!Objects.equals(contractType, oldContractType))) {
-                    scheduleRequest.setLocalDateTime(LocalDateTime.now().plusMinutes(offset));
-                    System.out.println("scheduleRequest = " + scheduleRequest);
-                    ScheduleResponse scheduleResponse = scheduling.createSchedule(scheduleRequest);
-                    logger.info("5edmet");
-                    System.out.println("requestForm = " + requestForm);
-                    System.out.println("scheduling = " + scheduleResponse);
-                }
-            } else {
-                if ((Objects.equals(requestForm.getAttribute(), "position")) && (!Objects.equals(position, oldPosition)) && Objects.equals(position, requestForm.getWantedAttributeValue())) {
-                    scheduleRequest.setLocalDateTime(LocalDateTime.now().plusMinutes(offset));
-                    System.out.println("scheduleRequest = " + scheduleRequest);
-                    ScheduleResponse scheduleResponse = scheduling.createSchedule(scheduleRequest);
-                    logger.info("5edmet");
-                    System.out.println("requestForm = " + requestForm);
-                    System.out.println("scheduling = " + scheduleResponse);
-                } else if ((Objects.equals(requestForm.getAttribute(), "status")) && (!Objects.equals(status, oldStatus)) && Objects.equals(status, requestForm.getWantedAttributeValue())) {
-                    scheduleRequest.setLocalDateTime(LocalDateTime.now().plusMinutes(offset));
-                    System.out.println("scheduleRequest = " + scheduleRequest);
-                    ScheduleResponse scheduleResponse = scheduling.createSchedule(scheduleRequest);
-                    logger.info("5edmet");
-                    System.out.println("requestForm = " + requestForm);
-                    System.out.println("scheduling = " + scheduleResponse);
-                } else if ((Objects.equals(requestForm.getAttribute(), "contractType")) && (!Objects.equals(contractType, oldContractType)) && Objects.equals(contractType, requestForm.getWantedAttributeValue())) {
-                    scheduleRequest.setLocalDateTime(LocalDateTime.now().plusMinutes(offset));
-                    System.out.println("scheduleRequest = " + scheduleRequest);
-                    ScheduleResponse scheduleResponse = scheduling.createSchedule(scheduleRequest);
-                    logger.info("5edmet");
-                    System.out.println("requestForm = " + requestForm);
-                    System.out.println("scheduling = " + scheduleResponse);
-                }
-            }
-
         }
+    }
+
+    private void runScheduler(ScheduleRequest scheduleRequest, Logger logger, Scheduling scheduling, Long offset, RequestForm requestForm) {
+        scheduleRequest.setLocalDateTime(LocalDateTime.now().plusMinutes(offset));
+        System.out.println("scheduleRequest = " + scheduleRequest);
+        ScheduleResponse scheduleResponse = scheduling.createSchedule(scheduleRequest);
+        logger.info("5edmet");
+        System.out.println("requestForm = " + requestForm);
+        System.out.println("scheduling = " + scheduleResponse);
     }
 }
