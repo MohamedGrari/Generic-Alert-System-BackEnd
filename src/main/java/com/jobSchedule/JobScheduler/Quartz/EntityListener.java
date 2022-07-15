@@ -51,13 +51,11 @@ public class EntityListener {
         Scheduler scheduler = factory.getScheduler();
         ScheduleRequest scheduleRequest = new ScheduleRequest();
         Scheduling scheduling = new Scheduling(scheduler);
-        System.out.println("requests = " + requests);
         scheduler.start();
-
         String position = employer.getPosition();
         String status = employer.getStatus();
         String contractType = employer.getContractType();
-        updater(position, status, contractType, scheduleRequest, requests, logger, scheduling);
+        updater(position, status, contractType, scheduleRequest, logger, scheduling);
     }
 
     @PrePersist
@@ -68,146 +66,116 @@ public class EntityListener {
         ScheduleRequest scheduleRequest = new ScheduleRequest();
         Scheduling scheduling = new Scheduling(scheduler);
         scheduler.start();
+        persister(employer, scheduleRequest, logger, scheduling);
+    }
+
+    private void persister(Employer  employer, ScheduleRequest scheduleRequest, Logger logger, Scheduling scheduling) {
         int hour = 23;
         int minute = 41;
-        if (Objects.equals(employer.getPosition(), "SENIOR")) {
-            List<RequestForm> requests = requestFormService.findByEntityAndEntityCriteriaValue("employer", "SENIOR");
-            persister(employer, scheduleRequest, hour, minute, requests, logger, scheduling);
-        }
-
-        if (Objects.equals(employer.getPosition(), "MANAGER")) {
-            List<RequestForm> requests = requestFormService.findByEntityAndEntityCriteriaValue("employer", "MANAGER");
-            System.out.println("requests = " + requests);
-            persister(employer, scheduleRequest, hour, minute, requests, logger, scheduling);
-        }
-
-        if (Objects.equals(employer.getPosition(), "JUNIOR")) {
-            List<RequestForm> requests = requestFormService.findByEntityAndEntityCriteriaValue("employer", "JUNIOR");
-            persister(employer, scheduleRequest, hour, minute, requests, logger, scheduling);
-        }
-
-        if (Objects.equals(employer.getPosition(), "RH")) {
-            List<RequestForm> requests = requestFormService.findByEntityAndEntityCriteriaValue("employer", "RH");
-            persister(employer, scheduleRequest, hour, minute, requests, logger, scheduling);
-        }
-
-        if (Objects.equals(employer.getPosition(), "INTERN")) {
-            List<RequestForm> requests = requestFormService.findByEntityAndEntityCriteriaValue("employer", "INTERN");
-            persister(employer, scheduleRequest, hour, minute, requests, logger, scheduling);
-        }
-
-        if (Objects.equals(employer.getStatus(), "ON")) {
-            List<RequestForm> requests = requestFormService.findByEntityAndEntityCriteriaValue("employer", "ON");
-            persister(employer, scheduleRequest, hour, minute, requests, logger, scheduling);
-        }
-
-        if (Objects.equals(employer.getStatus(), "OFF")) {
-            List<RequestForm> requests = requestFormService.findByEntityAndEntityCriteriaValue("employer", "OFF");
-            persister(employer, scheduleRequest, hour, minute, requests, logger, scheduling);
-        }
-
-        if (Objects.equals(employer.getContractType(), "CDI")) {
-            List<RequestForm> requests = requestFormService.findByEntityAndEntityCriteriaValue("employer", "CDI");
-            persister(employer, scheduleRequest, hour, minute, requests, logger, scheduling);
-        }
-
-        if (Objects.equals(employer.getContractType(), "CDD")) {
-            List<RequestForm> requests = requestFormService.findByEntityAndEntityCriteriaValue("employer", "CDD");
-            persister(employer, scheduleRequest, hour, minute, requests, logger, scheduling);
-        }
-        if (Objects.equals(employer.getContractType(), "FREELANCE")) {
-            List<RequestForm> requests = requestFormService.findByEntityAndEntityCriteriaValue("employer", "FREELANCE");
-            persister(employer, scheduleRequest, hour, minute, requests, logger, scheduling);
-        }
-        if (Objects.equals(employer.getPosition(), "ALL")) {
-            List<RequestForm> requests = requestFormService.findByEntity("employer");
-            System.out.println("requests = " + requests);
-            persister(employer, scheduleRequest, hour, minute, requests, logger, scheduling);
-        }
-    }
-
-    private void persister(Employer employer, ScheduleRequest scheduleRequest, int hour, int minute, List<RequestForm> requests, Logger logger, Scheduling scheduling) {
+        String[] entityCriteriaValues = {employer.getPosition(), employer.getStatus(), employer.getContractType(), null};
         for (RequestForm requestForm : requests) {
-            scheduleRequest.setJobText(requestForm.getText());
-            scheduleRequest.setJobAlertMode(requestForm.getAlertMode());
-            if (Objects.equals(requestForm.getAttribute(), "endContract")) {
-                if (Objects.equals(requestForm.getWantedAttributeValue(), "AT")) {
-                    scheduleRequest.setLocalDateTime(employer.getEndContract().atTime(hour, minute));
-                }
-                if (Objects.equals(requestForm.getWantedAttributeValue(), "BEFORE")) {
-                    scheduleRequest.setLocalDateTime(employer.getEndContract().minusDays(requestForm.getDayNumber()).atTime(hour, minute));
-                }
-                if (Objects.equals(requestForm.getWantedAttributeValue(), "AFTER")) {
-                    scheduleRequest.setLocalDateTime(employer.getEndContract().plusDays(requestForm.getDayNumber()).atTime(hour, minute));
-                }
+            if (!Arrays.asList(entityCriteriaValues).contains(requestForm.getEntityCriteriaValue())) {continue;}
+            switch (requestForm.getAttribute()) {
+                case "birthday":
+                    switch (requestForm.getWantedAttributeValue()){
+                        case "AT":
+                            scheduleRequest.setLocalDateTime(employer.getBirthday().atTime(hour, minute));
+                            runPersisterScheduler(scheduleRequest, logger, scheduling, requestForm);
+                            break;
+                        case "BEFORE":
+                            scheduleRequest.setLocalDateTime(employer.getBirthday().minusDays(requestForm.getDayNumber()).atTime(hour, minute));
+                            runPersisterScheduler(scheduleRequest, logger, scheduling, requestForm);
+                            break;
+                        case "AFTER":
+                            scheduleRequest.setLocalDateTime(employer.getEndContract().plusDays(requestForm.getDayNumber()).atTime(hour, minute));
+                            runPersisterScheduler(scheduleRequest, logger, scheduling, requestForm);
+                            break;
+                    }
+                    break;
+                case "hireDate":
+                    switch (requestForm.getWantedAttributeValue()){
+                        case "AT":
+                            scheduleRequest.setLocalDateTime(employer.getHireDate().atTime(hour, minute));
+                            runPersisterScheduler(scheduleRequest, logger, scheduling, requestForm);
+                            break;
+                        case "BEFORE":
+                            scheduleRequest.setLocalDateTime(employer.getHireDate().minusDays(requestForm.getDayNumber()).atTime(hour, minute));
+                            runPersisterScheduler(scheduleRequest, logger, scheduling, requestForm);
+                            break;
+                        case "AFTER":
+                            scheduleRequest.setLocalDateTime(employer.getHireDate().plusDays(requestForm.getDayNumber()).atTime(hour, minute));
+                            runPersisterScheduler(scheduleRequest, logger, scheduling, requestForm);
+                            break;
+                    }
+                    break;
+                case "endContract":
+                    switch (requestForm.getWantedAttributeValue()){
+                        case "AT":
+                            scheduleRequest.setLocalDateTime(employer.getEndContract().atTime(hour, minute));
+                            runPersisterScheduler(scheduleRequest, logger, scheduling, requestForm);
+                            break;
+                        case "BEFORE":
+                            scheduleRequest.setLocalDateTime(employer.getEndContract().minusDays(requestForm.getDayNumber()).atTime(hour, minute));
+                            runPersisterScheduler(scheduleRequest, logger, scheduling, requestForm);
+                            break;
+                        case "AFTER":
+                            scheduleRequest.setLocalDateTime(employer.getEndContract().plusDays(requestForm.getDayNumber()).atTime(hour, minute));
+                            runPersisterScheduler(scheduleRequest, logger, scheduling, requestForm);
+                            break;
+                    }
+                    break;
+
             }
-            if (Objects.equals(requestForm.getAttribute(), "birthday")) {
-                if (Objects.equals(requestForm.getWantedAttributeValue(), "AT")) {
-                    scheduleRequest.setLocalDateTime(employer.getBirthday().atTime(hour, minute));
-                }
-                if (Objects.equals(requestForm.getWantedAttributeValue(), "BEFORE")) {
-                    scheduleRequest.setLocalDateTime(employer.getBirthday().minusDays(requestForm.getDayNumber()).atTime(hour, minute));
-                }
-                if (Objects.equals(requestForm.getWantedAttributeValue(), "AFTER")) {
-                    scheduleRequest.setLocalDateTime(employer.getBirthday().plusDays(requestForm.getDayNumber()).atTime(hour, minute));
-                }
-            }
-            if (Objects.equals(requestForm.getAttribute(), "hireDate")) {
-                if (Objects.equals(requestForm.getWantedAttributeValue(), "AT")) {
-                    scheduleRequest.setLocalDateTime(employer.getHireDate().atTime(hour, minute));
-                }
-                if (Objects.equals(requestForm.getWantedAttributeValue(), "BEFORE")) {
-                    scheduleRequest.setLocalDateTime(employer.getHireDate().minusDays(requestForm.getDayNumber()).atTime(hour, minute));
-                }
-                if (Objects.equals(requestForm.getWantedAttributeValue(), "AFTER")) {
-                    scheduleRequest.setLocalDateTime(employer.getHireDate().plusDays(requestForm.getDayNumber()).atTime(hour, minute));
-                }
-            }
-            ScheduleResponse scheduleResponse = scheduling.createSchedule(scheduleRequest);
-            logger.info("5edmet");
-            System.out.println("requestForm = " + requestForm);
-            System.out.println("scheduling = " + scheduleResponse);
         }
     }
-
-    private void updater(String position, String status, String contractType, ScheduleRequest scheduleRequest, List<RequestForm> requests, Logger logger, Scheduling scheduling) {
+    private void updater(String position, String status, String contractType, ScheduleRequest scheduleRequest, Logger logger, Scheduling scheduling) {
         Long offset = 2L;
-        String[] entityCriteria = {position, status, contractType, null};
-        boolean isNotChangedPosition = Objects.equals(position, oldPosition);
-        boolean isNotChangedStatus = Objects.equals(status, oldStatus);
-        boolean isNotChangedContractType = Objects.equals(contractType, oldContractType);
+        String[] entityCriteriaValues = {position, status, contractType, null};
+        boolean positionIsChanged = !Objects.equals(position, oldPosition);
+        boolean StatusIsChanged = !Objects.equals(status, oldStatus);
+        boolean contractTypeIsChanged = !Objects.equals(contractType, oldContractType);
         for (RequestForm requestForm : requests) {
+            if (!Arrays.asList(entityCriteriaValues).contains(requestForm.getEntityCriteriaValue())) {continue;}
             String wantedAttributeValue = requestForm.getWantedAttributeValue();
             boolean wantedAttributeValueIsWHATEVER = (Objects.equals(wantedAttributeValue, "WHATEVER"));
-            if (!Arrays.asList(entityCriteria).contains(requestForm.getEntityCriteriaValue())) {continue;}
             switch (requestForm.getAttribute()) {
                 case "position":
-                    if (isNotChangedPosition) {continue;}
+                    if (!positionIsChanged) {continue;}
                     if ((wantedAttributeValueIsWHATEVER) || (Objects.equals(wantedAttributeValue, position))) {
-                        runScheduler(scheduleRequest,logger,scheduling,offset, requestForm);}
+                        runUpdaterScheduler(scheduleRequest,logger,scheduling,offset, requestForm);}
                     break;
                 case "status":
-                    if (isNotChangedStatus) {continue;}
+                    if (!StatusIsChanged) {continue;}
                     if ((wantedAttributeValueIsWHATEVER) || (Objects.equals(wantedAttributeValue, status))) {
-                        runScheduler(scheduleRequest,logger,scheduling,offset, requestForm); }
+                        runUpdaterScheduler(scheduleRequest,logger,scheduling,offset, requestForm); }
                     break;
                 case "contractType":
-                    if (isNotChangedContractType) {continue;}
+                    if (!contractTypeIsChanged) {continue;}
                     if ((wantedAttributeValueIsWHATEVER) || (Objects.equals(wantedAttributeValue, contractType))) {
-                        runScheduler(scheduleRequest,logger,scheduling,offset, requestForm);}
+                        runUpdaterScheduler(scheduleRequest,logger,scheduling,offset, requestForm);}
                     break;
                 case "WHATEVER":
-                    if (isNotChangedPosition && isNotChangedStatus && isNotChangedContractType) {
+                    if (!positionIsChanged && !StatusIsChanged && !contractTypeIsChanged) {
                         continue;
                     }
-                    runScheduler(scheduleRequest,logger,scheduling,offset, requestForm);
+                    runUpdaterScheduler(scheduleRequest,logger,scheduling,offset, requestForm);
                     break;
             }
         }
     }
-
-    private void runScheduler(ScheduleRequest scheduleRequest, Logger logger, Scheduling scheduling, Long offset, RequestForm requestForm) {
+    private void runPersisterScheduler(ScheduleRequest scheduleRequest, Logger logger, Scheduling scheduling, RequestForm requestForm) {
+        scheduleRequest.setJobText(requestForm.getText());
+        scheduleRequest.setJobAlertMode(requestForm.getAlertMode());
+        System.out.println("scheduleRequest = " + scheduleRequest);
+        ScheduleResponse scheduleResponse = scheduling.createSchedule(scheduleRequest);
+        logger.info("5edmet");
+        System.out.println("requestForm = " + requestForm);
+        System.out.println("scheduling = " + scheduleResponse);
+    }
+    private void runUpdaterScheduler(ScheduleRequest scheduleRequest, Logger logger, Scheduling scheduling, Long offset, RequestForm requestForm) {
         scheduleRequest.setLocalDateTime(LocalDateTime.now().plusMinutes(offset));
+        scheduleRequest.setJobText(requestForm.getText());
+        scheduleRequest.setJobAlertMode(requestForm.getAlertMode());
         System.out.println("scheduleRequest = " + scheduleRequest);
         ScheduleResponse scheduleResponse = scheduling.createSchedule(scheduleRequest);
         logger.info("5edmet");
