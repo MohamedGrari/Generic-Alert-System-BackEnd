@@ -28,24 +28,21 @@ public class Scheduling {
         try {
             LocalDateTime dateTime = scheduleRequest.getLocalDateTime();
             if(dateTime.isBefore(LocalDateTime.now())) {
-                ScheduleResponse scheduleResponse = new ScheduleResponse(false,
+                return new ScheduleResponse(false,
                         "dateTime must be after current time");
-                return scheduleResponse;
             }
 
             JobDetail jobDetail = buildJobDetail(scheduleRequest);
             Trigger trigger = buildJobTrigger(jobDetail, dateTime);
             scheduler.scheduleJob(jobDetail, trigger);
 
-            ScheduleResponse scheduleResponse = new ScheduleResponse(true,
+            return new ScheduleResponse(true,
                     jobDetail.getKey().getName(), jobDetail.getKey().getGroup(), "Scheduled Successfully!");
-            return scheduleResponse;
         } catch (SchedulerException ex) {
             logger.error("Error scheduling email", ex);
 
-            ScheduleResponse scheduleResponse = new ScheduleResponse(false,
+            return new ScheduleResponse(false,
                     "Error scheduling email. Please try later!");
-            return scheduleResponse;
         }
     }
     private JobDetail buildJobDetail(ScheduleRequest scheduleRequest) {
