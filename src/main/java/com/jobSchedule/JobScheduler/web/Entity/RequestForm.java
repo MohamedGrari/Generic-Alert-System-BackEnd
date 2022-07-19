@@ -34,10 +34,14 @@ public class RequestForm {
             Employer.subscribe(this);
         }
     }
-    public void update(Employer employer, List<RequestForm> requests) throws SchedulerException {
+    public void onPersist(Employer employer, List<RequestForm> requests) throws SchedulerException {
         //List<RequestForm> requests = employer.getRequests();
         PersistClass persistClass = new PersistClass();
         persistClass.Persister(employer, requests);
+    }
 
+    public void onUpdate(Employer employer, List<RequestForm> requests) throws SchedulerException {
+        PersistClass persistClass = new PersistClass();
+        persistClass.Updater(employer, requests);
     }
 }

@@ -11,6 +11,7 @@ import javax.persistence.*;
 import javax.validation.constraints.Email;
 import java.time.LocalDate;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 @Entity
@@ -34,10 +35,6 @@ public class Employer {
         @Transient
         private static List<RequestForm> requests = new ArrayList<>();
 
-//        public List<RequestForm> getRequests() {
-//                return requests;
-//        }
-
         public static void subscribe(RequestForm requestForm){
                 requests.add(requestForm);
         }
@@ -46,7 +43,14 @@ public class Employer {
         }
         public  void notifySubscribers(Employer employer) throws SchedulerException {
                 for (RequestForm requestForm  : requests){
-                        requestForm.update(employer, requests);
+                        String[] persistEntityAttributes= {"endContract", "hireDate", "birthday"};
+                        if(Arrays.asList(persistEntityAttributes).contains(requestForm.getAttribute())){
+                                requestForm.onPersist(employer, requests);
+                        }
+                        else {
+                                requestForm.onUpdate(employer, requests);
+                        }
+
                 }
         }
 

@@ -14,8 +14,11 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.quartz.SchedulerFactoryBean;
 import org.springframework.stereotype.Component;
 
+import java.time.LocalDateTime;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Objects;
+
 @Component
 public class PersistClass {
     private static RequestFormService requestFormService;
@@ -92,6 +95,65 @@ public class PersistClass {
     }
 
     private void runPersisterScheduler(ScheduleRequest scheduleRequest, Scheduling scheduling, RequestForm requestForm) {
+        scheduleRequest.setJobText(requestForm.getText());
+        scheduleRequest.setJobAlertMode(requestForm.getAlertMode());
+        System.out.println("scheduleRequest = " + scheduleRequest);
+        ScheduleResponse scheduleResponse = scheduling.createSchedule(scheduleRequest);
+        logger.info("5edmet");
+        System.out.println("requestForm = " + requestForm);
+        System.out.println("scheduling = " + scheduleResponse);
+    }
+
+    public void Updater(Employer employer, List<RequestForm> requests) throws SchedulerException {
+        StdSchedulerFactory factory = new StdSchedulerFactory();
+        Scheduler scheduler = factory.getScheduler();
+        ScheduleRequest scheduleRequest = new ScheduleRequest();
+        Scheduling scheduling = new Scheduling(scheduler);
+        scheduler.start();
+
+        String position = employer.getPosition();
+        String status = employer.getStatus();
+        String contractType = employer.getContractType();
+        String oldPosition = EntityListener.getOldPosition();
+        String oldStatus = EntityListener.getOldStatus();
+        String oldContractType = EntityListener.getOldContractType();
+        Long offset = 2L;
+        String[] entityCriteriaValues = {position, status, contractType, null};
+        boolean positionIsChanged = !Objects.equals(position, oldPosition);
+        boolean StatusIsChanged = !Objects.equals(status, oldStatus);
+        boolean contractTypeIsChanged = !Objects.equals(contractType, oldContractType);
+        for (RequestForm requestForm : requests) {
+            if (!Arrays.asList(entityCriteriaValues).contains(requestForm.getEntityCriteriaValue())) {continue;}
+            String wantedAttributeValue = requestForm.getWantedAttributeValue();
+            boolean wantedAttributeValueIsWHATEVER = (Objects.equals(wantedAttributeValue, "WHATEVER"));
+            switch (requestForm.getAttribute()) {
+                case "position":
+                    if (!positionIsChanged) {continue;}
+                    if ((wantedAttributeValueIsWHATEVER) || (Objects.equals(wantedAttributeValue, position))) {
+                        runUpdaterScheduler(scheduleRequest,scheduling,offset, requestForm);}
+                    break;
+                case "status":
+                    if (!StatusIsChanged) {continue;}
+                    if ((wantedAttributeValueIsWHATEVER) || (Objects.equals(wantedAttributeValue, status))) {
+                        runUpdaterScheduler(scheduleRequest,scheduling,offset, requestForm); }
+                    break;
+                case "contractType":
+                    if (!contractTypeIsChanged) {continue;}
+                    if ((wantedAttributeValueIsWHATEVER) || (Objects.equals(wantedAttributeValue, contractType))) {
+                        runUpdaterScheduler(scheduleRequest,scheduling,offset, requestForm);}
+                    break;
+                case "WHATEVER":
+                    if (!positionIsChanged && !StatusIsChanged && !contractTypeIsChanged) {
+                        continue;
+                    }
+                    runUpdaterScheduler(scheduleRequest,scheduling,offset, requestForm);
+                    break;
+            }
+        }
+    }
+
+    private void runUpdaterScheduler(ScheduleRequest scheduleRequest, Scheduling scheduling, Long offset, RequestForm requestForm) {
+        scheduleRequest.setLocalDateTime(LocalDateTime.now().plusMinutes(offset));
         scheduleRequest.setJobText(requestForm.getText());
         scheduleRequest.setJobAlertMode(requestForm.getAlertMode());
         System.out.println("scheduleRequest = " + scheduleRequest);
