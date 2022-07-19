@@ -1,6 +1,6 @@
 package com.jobSchedule.JobScheduler.web.Entity;
 
-import com.jobSchedule.JobScheduler.Quartz.PersistClass;
+import com.jobSchedule.JobScheduler.Quartz.SchedulerClass;
 import lombok.*;
 import org.quartz.SchedulerException;
 
@@ -34,14 +34,14 @@ public class RequestForm {
             Employer.subscribe(this);
         }
     }
-    public void onPersist(Employer employer, List<RequestForm> requests) throws SchedulerException {
+    public void onPersist(Employer employer, RequestForm requestForm) throws SchedulerException {
         //List<RequestForm> requests = employer.getRequests();
-        PersistClass persistClass = new PersistClass();
-        persistClass.Persister(employer, requests);
+        SchedulerClass persistClass = new SchedulerClass();
+        persistClass.Persister(employer, requestForm);
     }
 
-    public void onUpdate(Employer employer, List<RequestForm> requests) throws SchedulerException {
-        PersistClass persistClass = new PersistClass();
+    public void onUpdate(Employer employer, RequestForm requests) throws SchedulerException {
+        SchedulerClass persistClass = new SchedulerClass();
         persistClass.Updater(employer, requests);
     }
 }

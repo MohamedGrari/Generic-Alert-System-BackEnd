@@ -10,7 +10,6 @@ public class Config {
     @Bean
     public SchedulerFactoryBean createScheduler(){
         SchedulerFactoryBean schedulerFactory = new SchedulerFactoryBean();
-        //schedulerFactory.setSchedulerName("MyScheduler");
         schedulerFactory.setConfigLocation(new ClassPathResource("quartz.properties"));
         return schedulerFactory;
     }

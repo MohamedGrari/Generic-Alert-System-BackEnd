@@ -42,13 +42,14 @@ public class Employer {
                 requests.remove(requestForm);
         }
         public  void notifySubscribers(Employer employer) throws SchedulerException {
+                System.out.println("requests = " + requests);
                 for (RequestForm requestForm  : requests){
                         String[] persistEntityAttributes= {"endContract", "hireDate", "birthday"};
                         if(Arrays.asList(persistEntityAttributes).contains(requestForm.getAttribute())){
-                                requestForm.onPersist(employer, requests);
+                                requestForm.onPersist(employer, requestForm);
                         }
                         else {
-                                requestForm.onUpdate(employer, requests);
+                                requestForm.onUpdate(employer, requestForm);
                         }
 
                 }
