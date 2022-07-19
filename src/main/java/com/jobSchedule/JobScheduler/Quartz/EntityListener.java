@@ -127,7 +127,7 @@ public class EntityListener {
         }
     }
     private void updater(String position, String status, String contractType, ScheduleRequest scheduleRequest, Scheduling scheduling) {
-        Long offset = 2L;
+        Long offset = 10L;
         String[] entityCriteriaValues = {position, status, contractType, null};
         boolean positionIsChanged = !Objects.equals(position, oldPosition);
         boolean StatusIsChanged = !Objects.equals(status, oldStatus);
