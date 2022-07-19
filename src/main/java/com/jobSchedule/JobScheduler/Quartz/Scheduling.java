@@ -6,6 +6,7 @@ import org.quartz.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.stereotype.Component;
 
 import java.time.LocalDateTime;
@@ -16,6 +17,8 @@ import java.util.Date;
 import java.util.UUID;
 @Component
 public class Scheduling {
+//    @Autowired
+//    private JavaMailSender javaMailSender;
     private final Scheduler scheduler;
     private static final Logger logger = LoggerFactory.getLogger(Scheduling.class);
 
@@ -27,12 +30,24 @@ public class Scheduling {
     public ScheduleResponse createSchedule (ScheduleRequest scheduleRequest){
         try {
             LocalDateTime dateTime = scheduleRequest.getLocalDateTime();
+            String jobAlertMode = scheduleRequest.getJobAlertMode();
+            String jobText = scheduleRequest.getJobText();
+            JobDetail jobDetail = null;
             if(dateTime.isBefore(LocalDateTime.now())) {
                 return new ScheduleResponse(false,
                         "dateTime must be after current time");
             }
-
-            JobDetail jobDetail = buildJobDetail(scheduleRequest);
+            switch (jobAlertMode){
+                case "CONSOLE" :
+                    jobDetail = buildJobDetailCONSOLE(scheduleRequest);
+                    break;
+                case "EMAIL" :
+                    jobDetail = buildJobDetailEMAIL(scheduleRequest);
+                    break;
+                case "SMS" :
+                    jobDetail = buildJobDetailSMS(scheduleRequest);
+                    break;
+            }
             Trigger trigger = buildJobTrigger(jobDetail, dateTime);
             scheduler.scheduleJob(jobDetail, trigger);
 
@@ -45,6 +60,41 @@ public class Scheduling {
                     "Error scheduling email. Please try later!");
         }
     }
+
+    private JobDetail buildJobDetailSMS(ScheduleRequest scheduleRequest) {
+        JobDataMap jobDataMap = new JobDataMap();
+        jobDataMap.put("text", scheduleRequest.getJobText());
+        jobDataMap.put("number", "53536001");
+        return JobBuilder.newJob(SmsJob.class)
+                .withIdentity(UUID.randomUUID().toString(), "EMAIL_JOBS")
+                .usingJobData(jobDataMap)
+                .storeDurably()
+                .build();
+    }
+
+    private JobDetail buildJobDetailEMAIL(ScheduleRequest scheduleRequest) {
+        JobDataMap jobDataMap = new JobDataMap();
+        JavaMailSender javaMailSender = ApplicationContextHolder.getContext().getBean(JavaMailSender.class);
+        jobDataMap.put("object", javaMailSender);
+        jobDataMap.put("text", scheduleRequest.getJobText());
+        jobDataMap.put("email", "graristar@gmail.com");
+        return JobBuilder.newJob(EmailJob.class)
+                .withIdentity(UUID.randomUUID().toString(), "EMAIL_JOBS")
+                .usingJobData(jobDataMap)
+                .storeDurably()
+                .build();
+    }
+
+    private JobDetail buildJobDetailCONSOLE(ScheduleRequest scheduleRequest) {
+        JobDataMap jobDataMap = new JobDataMap();
+        jobDataMap.put("text", scheduleRequest.getJobText());
+        return JobBuilder.newJob(ConsoleJob.class)
+                .withIdentity(UUID.randomUUID().toString(), "CONSOLE_JOBS")
+                .usingJobData(jobDataMap)
+                .storeDurably()
+                .build();
+    }
+
     private JobDetail buildJobDetail(ScheduleRequest scheduleRequest) {
 
         JobDataMap jobDataMap = new JobDataMap();

@@ -25,8 +25,8 @@ public class SchedulerClass {
     private static final Logger logger = LoggerFactory.getLogger(SchedulerClass.class);
 
     public void Persister(Employer employer, RequestForm requestForm) throws SchedulerException {
-        int hour = 12;
-        int minute = 33;
+        int hour = 13;
+        int minute = 24;
         StdSchedulerFactory factory = new StdSchedulerFactory();
         Scheduler scheduler = factory.getScheduler();
         ScheduleRequest scheduleRequest = new ScheduleRequest();
@@ -110,7 +110,7 @@ public class SchedulerClass {
         String oldPosition = EntityListener.getOldPosition();
         String oldStatus = EntityListener.getOldStatus();
         String oldContractType = EntityListener.getOldContractType();
-        Long offset = 2L;
+        Long offset = 1L;
         String[] entityCriteriaValues = {position, status, contractType, null};
         boolean positionIsChanged = !Objects.equals(position, oldPosition);
         boolean StatusIsChanged = !Objects.equals(status, oldStatus);

@@ -11,7 +11,7 @@ import java.time.LocalDateTime;
 public class ConsoleJob extends QuartzJobBean {
     private static final Logger logger = LoggerFactory.getLogger(ConsoleJob.class);
     @Override
-    protected void executeInternal(JobExecutionContext context) throws JobExecutionException {
+    protected void executeInternal(JobExecutionContext context) {
         logger.info("Executing Job with key {}", context.getJobDetail().getKey());
         logger.info("Executing scheduler: " + context.getJobDetail().getJobDataMap().getString("text"));
     }
