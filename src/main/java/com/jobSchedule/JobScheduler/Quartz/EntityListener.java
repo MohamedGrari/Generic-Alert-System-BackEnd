@@ -11,6 +11,7 @@ import org.quartz.SchedulerException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.scheduling.quartz.SchedulerFactoryBean;
 import org.springframework.stereotype.Component;
 import javax.annotation.PostConstruct;
@@ -48,6 +49,9 @@ public class EntityListener {
 
     @PreUpdate
     public void onUpdate(Employer employer) throws SchedulerException {
+//        RequestFormService requestFormService = ApplicationContextHolder.getContext().getBean(RequestFormService.class);
+//        List<RequestForm> requests = requestFormService.findByEntity("employer");
+        System.out.println("requests = " + requests);
         Scheduler scheduler = schedulerFactory.getScheduler();
         ScheduleRequest scheduleRequest = new ScheduleRequest();
         Scheduling scheduling = new Scheduling(scheduler);
