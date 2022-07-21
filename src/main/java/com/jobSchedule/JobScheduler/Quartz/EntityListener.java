@@ -2,7 +2,6 @@ package com.jobSchedule.JobScheduler.Quartz;
 
 import com.jobSchedule.JobScheduler.web.Entity.Employer;
 import lombok.NoArgsConstructor;
-import org.quartz.SchedulerException;
 import org.springframework.stereotype.Component;
 import javax.persistence.*;
 
@@ -33,8 +32,13 @@ public class EntityListener {
     }
 
     @PrePersist
+    public void notifySubForPersist(Employer employer){
+        EventHandler eventHandler = ApplicationContextHolder.getContext().getBean(EventHandler.class);
+        eventHandler.handlePersisting(employer);
+    }
     @PreUpdate
-    public void notifySub(Employer employer) throws SchedulerException {
-        employer.notifySubscribers(employer);
+    public void notifySubForUpdate(Employer employer){
+        EventHandler eventHandler = ApplicationContextHolder.getContext().getBean(EventHandler.class);
+        eventHandler.handleUpdating(employer);
     }
 }

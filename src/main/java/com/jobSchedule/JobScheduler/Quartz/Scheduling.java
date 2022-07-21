@@ -11,14 +11,13 @@ import org.springframework.stereotype.Component;
 
 import java.time.LocalDateTime;
 import java.time.ZoneId;
-import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 import java.util.Date;
 import java.util.UUID;
 @Component
 public class Scheduling {
-//    @Autowired
-//    private JavaMailSender javaMailSender;
+    @Autowired
+    private JavaMailSender javaMailSender;
     private final Scheduler scheduler;
     private static final Logger logger = LoggerFactory.getLogger(Scheduling.class);
 
@@ -31,7 +30,6 @@ public class Scheduling {
         try {
             LocalDateTime dateTime = scheduleRequest.getLocalDateTime();
             String jobAlertMode = scheduleRequest.getJobAlertMode();
-            String jobText = scheduleRequest.getJobText();
             JobDetail jobDetail = null;
             if(dateTime.isBefore(LocalDateTime.now())) {
                 return new ScheduleResponse(false,
@@ -50,7 +48,7 @@ public class Scheduling {
             }
             Trigger trigger = buildJobTrigger(jobDetail, dateTime);
             scheduler.scheduleJob(jobDetail, trigger);
-
+            assert jobDetail != null;
             return new ScheduleResponse(true,
                     jobDetail.getKey().getName(), jobDetail.getKey().getGroup(), "Scheduled Successfully!");
         } catch (SchedulerException ex) {
@@ -74,7 +72,7 @@ public class Scheduling {
 
     private JobDetail buildJobDetailEMAIL(ScheduleRequest scheduleRequest) {
         JobDataMap jobDataMap = new JobDataMap();
-        JavaMailSender javaMailSender = ApplicationContextHolder.getContext().getBean(JavaMailSender.class);
+        //JavaMailSender javaMailSender = ApplicationContextHolder.getContext().getBean(JavaMailSender.class);
         jobDataMap.put("object", javaMailSender);
         jobDataMap.put("text", scheduleRequest.getJobText());
         jobDataMap.put("email", "graristar@gmail.com");

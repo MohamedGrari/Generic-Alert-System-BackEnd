@@ -32,26 +32,6 @@ public class Employer {
         private LocalDate hireDate;
         private LocalDate birthday;
         private LocalDate EndContract;
-        @Transient
-        private static List<RequestForm> requests = new ArrayList<>();
 
-        public static void subscribe(RequestForm requestForm){
-                requests.add(requestForm);
-        }
-        public void unSubscribe(RequestForm requestForm){
-                requests.remove(requestForm);
-        }
-        public  void notifySubscribers(Employer employer) throws SchedulerException {
-                for (RequestForm requestForm  : requests){
-                        String[] persistEntityAttributes= {"endContract", "hireDate", "birthday"};
-                        if(Arrays.asList(persistEntityAttributes).contains(requestForm.getAttribute())){
-                                requestForm.onPersist(employer, requestForm);
-                        }
-                        else {
-                                requestForm.onUpdate(employer, requestForm);
-                        }
-
-                }
-        }
 
 }
