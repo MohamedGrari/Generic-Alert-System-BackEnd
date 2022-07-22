@@ -27,17 +27,14 @@ public class EmailJob extends QuartzJobBean {
         String msgBody = jobDataMap.getString("text");
         JavaMailSender mailSender = (JavaMailSender) jobDataMap.get("object");
         String subject = "ALERT FROM QUARTZ";
-        sendMail(sender, recipient, msgBody, subject, mailSender);
-    }
-    public void sendMail(String sender, String recipient, String body, String subject, JavaMailSender mailSender){
         try {
             SimpleMailMessage mailMessage = new SimpleMailMessage();
             mailMessage.setFrom(sender);
             mailMessage.setTo(recipient);
-            mailMessage.setText(body);
+            mailMessage.setText(msgBody);
             mailMessage.setSubject(subject);
             mailSender.send(mailMessage);
-            logger.info("Executing Job with key");
+            logger.info("Executing Job with key" + context.getJobDetail().getKey());
             logger.info("Executing scheduler: Email sent ...");
         } catch (Exception e){
             logger.info("Error while Sending Mail" + e);

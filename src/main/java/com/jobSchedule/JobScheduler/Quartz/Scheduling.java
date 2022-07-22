@@ -62,9 +62,9 @@ public class Scheduling {
     private JobDetail buildJobDetailSMS(ScheduleRequest scheduleRequest) {
         JobDataMap jobDataMap = new JobDataMap();
         jobDataMap.put("text", scheduleRequest.getJobText());
-        jobDataMap.put("number", "53536001");
+        jobDataMap.put("number", "+21653536001");
         return JobBuilder.newJob(SmsJob.class)
-                .withIdentity(UUID.randomUUID().toString(), "EMAIL_JOBS")
+                .withIdentity(UUID.randomUUID().toString(), "SMS_JOBS")
                 .usingJobData(jobDataMap)
                 .storeDurably()
                 .build();
