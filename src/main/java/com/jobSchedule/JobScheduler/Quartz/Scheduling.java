@@ -2,6 +2,7 @@ package com.jobSchedule.JobScheduler.Quartz;
 
 import com.jobSchedule.JobScheduler.Quartz.payload.ScheduleRequest;
 import com.jobSchedule.JobScheduler.Quartz.payload.ScheduleResponse;
+import com.jobSchedule.JobScheduler.web.Service.EmployerService;
 import org.quartz.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -18,6 +19,8 @@ import java.util.UUID;
 public class Scheduling {
     @Autowired
     private JavaMailSender javaMailSender;
+    @Autowired
+    EmployerService employerService;
     private final Scheduler scheduler;
     private static final Logger logger = LoggerFactory.getLogger(Scheduling.class);
 
@@ -61,6 +64,7 @@ public class Scheduling {
 
     private JobDetail buildJobDetailSMS(ScheduleRequest scheduleRequest) {
         JobDataMap jobDataMap = new JobDataMap();
+        jobDataMap.put("object", employerService);
         jobDataMap.put("destination", scheduleRequest.getJobDestination());
         jobDataMap.put("destinationValue", scheduleRequest.getJobDestinationValue());
         jobDataMap.put("text", scheduleRequest.getJobText());

@@ -17,9 +17,6 @@ public class RequestFormService {
     public RequestFormService(RequestFormRepo requestFormRepo) {
         this.requestFormRepo = requestFormRepo;
     }
-    public List<RequestForm> findByEntityAndEntityCriteriaValue(String entity, String entityCriteriaValue){
-        return requestFormRepo.findRequestFormsByEntityAndEntityCriteriaValue(entity, entityCriteriaValue);
-    }
     public List<RequestForm> findAllRequests(){
         return requestFormRepo.findAll();
     }
@@ -31,9 +28,6 @@ public class RequestFormService {
     }
     public List<RequestForm> findByEntity(String entity){
         return requestFormRepo.findRequestFormsByEntity(entity);
-    }
-    public List<RequestForm> findByEntityAndAttribute(String entity, String attribute){
-        return requestFormRepo.findRequestFormByEntityAndAttribute(entity, attribute);
     }
     public RequestForm updateRequestForm(RequestForm requestForm){
         return requestFormRepo.save(requestForm);

@@ -21,7 +21,7 @@ public class Employer {
         @Email
         private String email;
         private String phoneNumber;
-        private String Position;
+        private String position;
         private String status;
         private String contractType;
         private LocalDate hireDate;

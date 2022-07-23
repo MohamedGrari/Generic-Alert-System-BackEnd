@@ -14,9 +14,6 @@ import org.springframework.stereotype.Component;
 @Component
 public class EmailJob extends QuartzJobBean {
     private static final Logger logger = LoggerFactory.getLogger(EmailJob.class);
-//    @Autowired
-//    private JavaMailSender javaMailSender;
-
     @Value("${spring.mail.username}")
     private String sender;
 

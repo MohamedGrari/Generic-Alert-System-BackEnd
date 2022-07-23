@@ -4,19 +4,22 @@ import com.jobSchedule.JobScheduler.Quartz.payload.ScheduleRequest;
 import com.jobSchedule.JobScheduler.Quartz.payload.ScheduleResponse;
 import com.jobSchedule.JobScheduler.web.Entity.Employer;
 import com.jobSchedule.JobScheduler.web.Entity.RequestForm;
+import com.jobSchedule.JobScheduler.web.Service.RequestFormService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
+import org.springframework.stereotype.Service;
 
+import javax.annotation.PostConstruct;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
 
-@Component
+@Service
 public class EventHandler {
     @Value("${scheduler.OFFSET}")
     long OFFSET;
@@ -28,8 +31,19 @@ public class EventHandler {
     private ScheduleRequest scheduleRequest;
     @Autowired
     private Scheduling scheduling;
+    @Autowired
+    private RequestFormService requestFormService;
     private static final List<RequestForm> requests = new ArrayList<>();
     private static final Logger logger = LoggerFactory.getLogger(EventHandler.class);
+
+    @PostConstruct
+    public void subscribing(){
+        List<RequestForm> requests = requestFormService.findByEntity("employer");
+        for( RequestForm request : requests){
+            subscribe(request);
+        }
+    }
+
     public static void subscribe(RequestForm requestForm){
         requests.add(requestForm);
     }
@@ -56,6 +70,7 @@ public class EventHandler {
         boolean StatusIsChanged = !Objects.equals(status, oldStatus);
         boolean contractTypeIsChanged = !Objects.equals(contractType, oldContractType);
         if (!Arrays.asList(entityCriteriaValues).contains(request.getEntityCriteriaValue())) return;
+        if (Objects.equals(request.getDestination(), "AUTO")){request.setDestinationValue(Long.toString(employer.getId()));}
         String wantedAttributeValue = request.getWantedAttributeValue();
         boolean wantedAttributeValueIsWHATEVER = (Objects.equals(wantedAttributeValue, "WHATEVER"));
         scheduleRequest.setLocalDateTime(LocalDateTime.now().plusMinutes(OFFSET));

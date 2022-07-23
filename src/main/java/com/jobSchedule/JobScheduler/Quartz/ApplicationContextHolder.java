@@ -14,15 +14,6 @@ import java.util.List;
 @Component
 public class ApplicationContextHolder implements ApplicationContextAware {
     private static ApplicationContext context;
-    @Autowired
-    private RequestFormService requestFormService;
-    @PostConstruct
-    public void subscribing(){
-        List<RequestForm> requests = requestFormService.findByEntity("employer");
-        for( RequestForm request : requests){
-            EventHandler.subscribe(request);
-        }
-    }
     @Override
     public void setApplicationContext(ApplicationContext applicationContext) throws BeansException {
         context = applicationContext;

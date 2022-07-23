@@ -32,10 +32,6 @@ public class RequestFormController {
     public RequestForm updateEmployer(@RequestBody RequestForm requestForm) {
         return requestFormService.updateRequestForm(requestForm);
     }
-    @GetMapping("/requesters")
-    public List<RequestForm> getRequesters(){
-    return requestFormService.findByEntityAndAttribute("employer", "endContract");
-    }
     @DeleteMapping("/deleteRequest")
     public void deleteEmployer(@Valid @RequestBody RequestForm requestForm){
         requestFormService.deleteRequestForm(requestForm);

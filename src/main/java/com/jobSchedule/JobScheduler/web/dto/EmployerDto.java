@@ -14,7 +14,7 @@ public class EmployerDto {
 
     @Email
     private String email;
-
+    private String phoneNumber;
     private String Position;
 
     private String status;

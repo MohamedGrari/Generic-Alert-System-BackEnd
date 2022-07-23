@@ -4,13 +4,10 @@ import com.jobSchedule.JobScheduler.web.Entity.Employer;
 import com.jobSchedule.JobScheduler.web.Repo.EmployerRepo;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-
 import java.util.List;
 import java.util.Optional;
 
 @Service
-//@Transactional
 public class EmployerService {
     final EmployerRepo employerRepo;
     @Autowired
@@ -26,7 +23,7 @@ public class EmployerService {
     public Employer saveEmployer(Employer employer){
         return employerRepo.save(employer);
     }
-    public List<Employer> findEmployerByPosition(String position){ return employerRepo.findEmployerByPosition(position);}
+    public List<Employer> findEmployerByPosition(String position){ return employerRepo.findEmployersByPosition(position);}
     public Employer updateEmployer(Employer employer) {
         return employerRepo.save(employer);
     }
