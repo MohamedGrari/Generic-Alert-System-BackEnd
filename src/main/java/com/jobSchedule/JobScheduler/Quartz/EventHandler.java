@@ -94,55 +94,21 @@ public class EventHandler {
     private void onPersist(Employer employer, RequestForm request) {
         String[] entityCriteriaValues = {employer.getPosition(), employer.getStatus(), employer.getContractType(), null};
         if (!Arrays.asList(entityCriteriaValues).contains(request.getEntityCriteriaValue())) {return;}
+        String[] attributes = {"birthday", "hireDate", "endContract"};
+        if (!Arrays.asList(attributes).contains(request.getAttribute())) {return;}
         if (Objects.equals(request.getDestination(), "AUTO")){request.setDestinationValue(Long.toString(employer.getId()));}
-        switch (request.getAttribute()) {
-            case "birthday":
-                switch (request.getWantedAttributeValue()){
-                    case "AT":
-                        scheduleRequest.setLocalDateTime(employer.getBirthday().atTime(HOUR, MINUTE));
-                        runScheduler(request);
-                        break;
-                    case "BEFORE":
-                        scheduleRequest.setLocalDateTime(employer.getBirthday().minusDays(request.getDayNumber()).atTime(HOUR, MINUTE));
-                        runScheduler(request);
-                        break;
-                    case "AFTER":
-                        scheduleRequest.setLocalDateTime(employer.getEndContract().plusDays(request.getDayNumber()).atTime(HOUR, MINUTE));
-                        runScheduler(request);
-                        break;
-                }
+        switch (request.getWantedAttributeValue()){
+            case "AT":
+                scheduleRequest.setLocalDateTime(employer.getBirthday().atTime(HOUR, MINUTE));
+                runScheduler(request);
                 break;
-            case "hireDate":
-                switch (request.getWantedAttributeValue()){
-                    case "AT":
-                        scheduleRequest.setLocalDateTime(employer.getHireDate().atTime(HOUR, MINUTE));
-                        runScheduler(request);
-                        break;
-                    case "BEFORE":
-                        scheduleRequest.setLocalDateTime(employer.getHireDate().minusDays(request.getDayNumber()).atTime(HOUR, MINUTE));
-                        runScheduler(request);
-                        break;
-                    case "AFTER":
-                        scheduleRequest.setLocalDateTime(employer.getHireDate().plusDays(request.getDayNumber()).atTime(HOUR, MINUTE));
-                        runScheduler(request);
-                        break;
-                }
+            case "BEFORE":
+                scheduleRequest.setLocalDateTime(employer.getBirthday().minusDays(request.getDayNumber()).atTime(HOUR, MINUTE));
+                runScheduler(request);
                 break;
-            case "endContract":
-                switch (request.getWantedAttributeValue()){
-                    case "AT":
-                        scheduleRequest.setLocalDateTime(employer.getEndContract().atTime(HOUR, MINUTE));
-                        runScheduler(request);
-                        break;
-                    case "BEFORE":
-                        scheduleRequest.setLocalDateTime(employer.getEndContract().minusDays(request.getDayNumber()).atTime(HOUR, MINUTE));
-                        runScheduler(request);
-                        break;
-                    case "AFTER":
-                        scheduleRequest.setLocalDateTime(employer.getEndContract().plusDays(request.getDayNumber()).atTime(HOUR, MINUTE));
-                        runScheduler(request);
-                        break;
-                }
+            case "AFTER":
+                scheduleRequest.setLocalDateTime(employer.getEndContract().plusDays(request.getDayNumber()).atTime(HOUR, MINUTE));
+                runScheduler(request);
                 break;
         }
     }

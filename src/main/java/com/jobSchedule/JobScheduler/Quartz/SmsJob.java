@@ -21,9 +21,9 @@ import java.util.Optional;
 public class SmsJob extends QuartzJobBean {
     @Autowired
     EmployerService employerService;
-    private final String ACCOUNT_SID = "ACa70269fa83571dd0bfb400dd1f5ec734";
-    private final String AUTH_TOKEN = "536d201ef6ba879817268bfc0d77f996";
-    private final String FROM = "+14782161663";
+    private static final String ACCOUNT_SID = "ACa70269fa83571dd0bfb400dd1f5ec734";
+    private static final String AUTH_TOKEN = "536d201ef6ba879817268bfc0d77f996";
+    private static final String FROM = "+14782161663";
     private static final Logger logger = LoggerFactory.getLogger(EmailJob.class);
     @Override
     protected void executeInternal(JobExecutionContext context){
