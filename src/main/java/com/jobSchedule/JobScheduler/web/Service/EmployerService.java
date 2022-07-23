@@ -26,7 +26,7 @@ public class EmployerService {
     public Employer saveEmployer(Employer employer){
         return employerRepo.save(employer);
     }
-    //@Transactional
+    public List<Employer> findEmployerByPosition(String position){ return employerRepo.findEmployerByPosition(position);}
     public Employer updateEmployer(Employer employer) {
         return employerRepo.save(employer);
     }

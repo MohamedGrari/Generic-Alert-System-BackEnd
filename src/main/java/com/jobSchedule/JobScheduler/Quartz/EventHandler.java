@@ -94,6 +94,7 @@ public class EventHandler {
     private void onPersist(Employer employer, RequestForm request) {
         String[] entityCriteriaValues = {employer.getPosition(), employer.getStatus(), employer.getContractType(), null};
         if (!Arrays.asList(entityCriteriaValues).contains(request.getEntityCriteriaValue())) {return;}
+        if (Objects.equals(request.getDestination(), "AUTO")){request.setDestinationValue(Long.toString(employer.getId()));}
         switch (request.getAttribute()) {
             case "birthday":
                 switch (request.getWantedAttributeValue()){
@@ -149,6 +150,8 @@ public class EventHandler {
     private void runScheduler(RequestForm request) {
         scheduleRequest.setJobText(request.getText());
         scheduleRequest.setJobAlertMode(request.getAlertMode());
+        scheduleRequest.setJobDestination(request.getDestination());
+        scheduleRequest.setJobDestinationValue(request.getDestinationValue());
         ScheduleResponse scheduleResponse = scheduling.createSchedule(scheduleRequest);
         logger.info("IT'S WORKING");
         System.out.println("request = " + request);

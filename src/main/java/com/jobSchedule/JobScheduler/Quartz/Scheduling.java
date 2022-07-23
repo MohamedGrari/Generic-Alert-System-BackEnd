@@ -61,8 +61,9 @@ public class Scheduling {
 
     private JobDetail buildJobDetailSMS(ScheduleRequest scheduleRequest) {
         JobDataMap jobDataMap = new JobDataMap();
+        jobDataMap.put("destination", scheduleRequest.getJobDestination());
+        jobDataMap.put("destinationValue", scheduleRequest.getJobDestinationValue());
         jobDataMap.put("text", scheduleRequest.getJobText());
-        jobDataMap.put("number", "+21653536001");
         return JobBuilder.newJob(SmsJob.class)
                 .withIdentity(UUID.randomUUID().toString(), "SMS_JOBS")
                 .usingJobData(jobDataMap)
@@ -72,7 +73,6 @@ public class Scheduling {
 
     private JobDetail buildJobDetailEMAIL(ScheduleRequest scheduleRequest) {
         JobDataMap jobDataMap = new JobDataMap();
-        //JavaMailSender javaMailSender = ApplicationContextHolder.getContext().getBean(JavaMailSender.class);
         jobDataMap.put("object", javaMailSender);
         jobDataMap.put("text", scheduleRequest.getJobText());
         jobDataMap.put("email", "graristar@gmail.com");

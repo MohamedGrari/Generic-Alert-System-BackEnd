@@ -1,18 +1,12 @@
 package com.jobSchedule.JobScheduler.web.Entity;
 
-//import com.jobSchedule.JobScheduler.Quartz.conf.Config;
 import com.jobSchedule.JobScheduler.Quartz.EntityListener;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import org.quartz.SchedulerException;
-
 import javax.persistence.*;
 import javax.validation.constraints.Email;
 import java.time.LocalDate;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
 
 @Entity
 @Data
@@ -26,12 +20,11 @@ public class Employer {
         private String name;
         @Email
         private String email;
+        private String phoneNumber;
         private String Position;
         private String status;
         private String contractType;
         private LocalDate hireDate;
         private LocalDate birthday;
         private LocalDate EndContract;
-
-
 }

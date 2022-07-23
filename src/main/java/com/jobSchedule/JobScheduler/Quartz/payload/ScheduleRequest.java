@@ -20,4 +20,6 @@ public class ScheduleRequest {
     private LocalDateTime localDateTime;
     private String jobText;
     private String jobAlertMode;
+    private String jobDestination;
+    private String jobDestinationValue;
 }

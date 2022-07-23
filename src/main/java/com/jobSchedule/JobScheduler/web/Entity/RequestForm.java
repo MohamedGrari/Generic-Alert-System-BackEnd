@@ -2,7 +2,6 @@ package com.jobSchedule.JobScheduler.web.Entity;
 
 import com.jobSchedule.JobScheduler.Quartz.EventHandler;
 import lombok.*;
-
 import javax.persistence.*;
 import java.util.Objects;
 
@@ -10,7 +9,6 @@ import java.util.Objects;
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-//@EntityListeners(EntityListener.class)
 public class RequestForm {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -22,9 +20,9 @@ public class RequestForm {
     private String wantedAttributeValue;
     private String alertMode;
     private String destination;
-    private String wantedDestinationValue;
-    private int dayNumber;
+    private String destinationValue;
     private String text;
+    private int dayNumber;
     private boolean isUpdate;
 
     @PostPersist
