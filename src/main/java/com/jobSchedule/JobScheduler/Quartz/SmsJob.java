@@ -20,7 +20,6 @@ public class SmsJob extends QuartzJobBean {
     @Override
     protected void executeInternal(JobExecutionContext context){
         List<Employer> employers;
-        Employer employer;
         JobDataMap jobDataMap = context.getJobDetail().getJobDataMap();
         EmployerService employerService = (EmployerService) jobDataMap.get("object");
         String msgBody = jobDataMap.getString("text");
@@ -33,15 +32,19 @@ public class SmsJob extends QuartzJobBean {
             case "status":
             case "contractType":
                 employers = employerService.findEmployerByPosition(jobDestinationValue);
-                sendSMS(employers, msgBody);
+                for(Employer employer : employers){
+                    sendSMS(employer, msgBody);
+                }
                 break;
             case "ALL":
                 employers = employerService.findAllEmployer();
-                sendSMS(employers, msgBody);
+                for(Employer employer : employers){
+                    sendSMS(employer, msgBody);
+                }
                 break;
             case "AUTO":
             case "ONE":
-                employer = employerService.findEmployerById(Long.parseLong(jobDestinationValue)).get();
+                Employer employer = employerService.findEmployerById(Long.parseLong(jobDestinationValue)).get();
                 sendSMS(employer, msgBody);
                 break;
         }
@@ -53,16 +56,6 @@ public class SmsJob extends QuartzJobBean {
             logger.info("Executing scheduler: SMS sent to " + employer.getName());
         } catch (Exception e){
             logger.info("Error while Sending SMS to " + employer.getName() + ":" + e);
-        }
-    }
-    private void sendSMS(List<Employer> employers, String msgBody) {
-        for(Employer employer : employers){
-            try {
-                Message.creator(new PhoneNumber(employer.getPhoneNumber()), new PhoneNumber(FROM), msgBody).create();
-                logger.info("Executing scheduler: SMS sent to " + employer.getName());
-            } catch (Exception e){
-                logger.info("Error while Sending SMS to " + employer.getName() + ":" + e);
-            }
         }
     }
 }

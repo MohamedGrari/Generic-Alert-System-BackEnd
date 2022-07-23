@@ -31,4 +31,11 @@ public class RequestForm {
             EventHandler.subscribe(this);
         }
     }
+    @PreRemove
+    private void onRemove(){
+        if (Objects.equals(entity, "employer")){
+            EventHandler.unSubscribe(this);
+        }
+    }
+
 }

@@ -77,9 +77,11 @@ public class Scheduling {
 
     private JobDetail buildJobDetailEMAIL(ScheduleRequest scheduleRequest) {
         JobDataMap jobDataMap = new JobDataMap();
-        jobDataMap.put("object", javaMailSender);
+        jobDataMap.put("employerService", employerService);
+        jobDataMap.put("mailSender", javaMailSender);
+        jobDataMap.put("destination", scheduleRequest.getJobDestination());
+        jobDataMap.put("destinationValue", scheduleRequest.getJobDestinationValue());
         jobDataMap.put("text", scheduleRequest.getJobText());
-        jobDataMap.put("email", "graristar@gmail.com");
         return JobBuilder.newJob(EmailJob.class)
                 .withIdentity(UUID.randomUUID().toString(), "EMAIL_JOBS")
                 .usingJobData(jobDataMap)
