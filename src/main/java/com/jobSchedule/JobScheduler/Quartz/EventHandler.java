@@ -4,6 +4,7 @@ import com.jobSchedule.JobScheduler.Quartz.payload.ScheduleRequest;
 import com.jobSchedule.JobScheduler.Quartz.payload.ScheduleResponse;
 import com.jobSchedule.JobScheduler.web.Entity.Employer;
 import com.jobSchedule.JobScheduler.web.Entity.RequestForm;
+import com.jobSchedule.JobScheduler.web.Service.EmployerService;
 import com.jobSchedule.JobScheduler.web.Service.RequestFormService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -33,22 +34,35 @@ public class EventHandler {
     private Scheduling scheduling;
     @Autowired
     private RequestFormService requestFormService;
+    @Autowired
+    private EmployerService employerService;
     private static final List<RequestForm> requests = new ArrayList<>();
+    private static final List<Employer> employers = new ArrayList<>();
     private static final Logger logger = LoggerFactory.getLogger(EventHandler.class);
 
     @PostConstruct
     public void subscribing(){
         List<RequestForm> requests = requestFormService.findByEntity("employer");
+        List<Employer> employers = employerService.findAllEmployer();
         for( RequestForm request : requests){
             subscribe(request);
         }
+        for( Employer employer : employers){
+            subscribe(employer);
+        }
     }
 
+    public static void subscribe(Employer employer){
+        employers.add(employer);
+    }
     public static void subscribe(RequestForm requestForm){
         requests.add(requestForm);
     }
     public static void unSubscribe(RequestForm requestForm){
         requests.remove(requestForm);
+    }
+    public static void unSubscribe(Employer employer){
+        employers.remove(employer);
     }
 
     public void handleUpdating(Employer employer) {
@@ -78,57 +92,64 @@ public class EventHandler {
             case "position":
                 if (!positionIsChanged) {return;}
                 if ((wantedAttributeValueIsWHATEVER) || (Objects.equals(wantedAttributeValue, position))) {
-                    runScheduler(request);}
+                    runScheduler(request, employer);}
                 break;
             case "status":
                 if (!StatusIsChanged) {return;}
                 if ((wantedAttributeValueIsWHATEVER) || (Objects.equals(wantedAttributeValue, status))) {
-                    runScheduler(request); }
+                    runScheduler(request, employer); }
                 break;
             case "contractType":
                 if (!contractTypeIsChanged) {return;}
                 if ((wantedAttributeValueIsWHATEVER) || (Objects.equals(wantedAttributeValue, contractType))) {
-                    runScheduler(request);}
+                    runScheduler(request, employer);}
                 break;
             case "WHATEVER":
                 if (!positionIsChanged && !StatusIsChanged && !contractTypeIsChanged) {
                     return;
                 }
-                runScheduler(request);
+                runScheduler(request, employer);
                 break;
         }
     }
 
     public void handlePersisting(Employer employer){
+        String[] entityCriteriaValues = {employer.getPosition(), employer.getStatus(), employer.getContractType(), null};
         for (RequestForm request : requests) {
             if(request.isUpdate()) continue;
+            if (!Arrays.asList(entityCriteriaValues).contains(request.getEntityCriteriaValue())) {continue;}
             onPersist(employer, request);
         }
     }
 
     private void onPersist(Employer employer, RequestForm request) {
-        String[] entityCriteriaValues = {employer.getPosition(), employer.getStatus(), employer.getContractType(), null};
-        if (!Arrays.asList(entityCriteriaValues).contains(request.getEntityCriteriaValue())) {return;}
-        String[] attributes = {"birthday", "hireDate", "endContract"};
-        if (!Arrays.asList(attributes).contains(request.getAttribute())) {return;}
         if (Objects.equals(request.getDestination(), "AUTO")){request.setDestinationValue(Long.toString(employer.getId()));}
         switch (request.getWantedAttributeValue()){
             case "AT":
                 scheduleRequest.setLocalDateTime(employer.getBirthday().atTime(HOUR, MINUTE));
-                runScheduler(request);
+                runScheduler(request, employer);
                 break;
             case "BEFORE":
                 scheduleRequest.setLocalDateTime(employer.getBirthday().minusDays(request.getDayNumber()).atTime(HOUR, MINUTE));
-                runScheduler(request);
+                runScheduler(request, employer);
                 break;
             case "AFTER":
                 scheduleRequest.setLocalDateTime(employer.getEndContract().plusDays(request.getDayNumber()).atTime(HOUR, MINUTE));
-                runScheduler(request);
+                runScheduler(request, employer);
                 break;
         }
     }
 
-    private void runScheduler(RequestForm request) {
+    public void handleRequestFormPersisting(RequestForm requestForm){
+        if(requestForm.isUpdate()) return;
+        for (Employer employer : employers) {
+            String[] entityCriteriaValues = {employer.getPosition(), employer.getStatus(), employer.getContractType(), null};
+            if (!Arrays.asList(entityCriteriaValues).contains(requestForm.getEntityCriteriaValue())) {continue;}
+            onPersist(employer, requestForm);
+        }
+    }
+
+    private void runScheduler(RequestForm request, Employer employer) {
         scheduleRequest.setJobText(request.getText());
         scheduleRequest.setJobAlertMode(request.getAlertMode());
         scheduleRequest.setJobDestination(request.getDestination());
@@ -136,6 +157,7 @@ public class EventHandler {
         ScheduleResponse scheduleResponse = scheduling.createSchedule(scheduleRequest);
         logger.info("IT'S WORKING");
         System.out.println("request = " + request);
+        System.out.println("employer = " + employer);
         System.out.println("scheduling = " + scheduleResponse);
     }
 }

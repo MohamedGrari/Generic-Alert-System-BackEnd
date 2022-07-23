@@ -1,5 +1,6 @@
 package com.jobSchedule.JobScheduler.web.Entity;
 
+import com.jobSchedule.JobScheduler.Quartz.ApplicationContextHolder;
 import com.jobSchedule.JobScheduler.Quartz.EventHandler;
 import lombok.*;
 import javax.persistence.*;
@@ -30,6 +31,8 @@ public class RequestForm {
         if (Objects.equals(entity, "employer")){
             EventHandler.subscribe(this);
         }
+        EventHandler eventHandler = ApplicationContextHolder.getContext().getBean(EventHandler.class);
+        eventHandler.handleRequestFormPersisting(this);
     }
     @PreRemove
     private void onRemove(){

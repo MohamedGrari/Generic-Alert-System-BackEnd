@@ -33,6 +33,7 @@ public class EntityListener {
 
     @PrePersist
     public void notifySubForPersist(Employer employer){
+        EventHandler.subscribe(employer);
         EventHandler eventHandler = ApplicationContextHolder.getContext().getBean(EventHandler.class);
         eventHandler.handlePersisting(employer);
     }
@@ -41,4 +42,9 @@ public class EntityListener {
         EventHandler eventHandler = ApplicationContextHolder.getContext().getBean(EventHandler.class);
         eventHandler.handleUpdating(employer);
     }
+    @PreRemove
+    public void unsubscribe(Employer employer){
+        EventHandler.unSubscribe(employer);
+    }
+
 }

@@ -9,7 +9,6 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.stereotype.Component;
-
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
@@ -55,10 +54,10 @@ public class Scheduling {
             return new ScheduleResponse(true,
                     jobDetail.getKey().getName(), jobDetail.getKey().getGroup(), "Scheduled Successfully!");
         } catch (SchedulerException ex) {
-            logger.error("Error scheduling email", ex);
+            logger.error("Error scheduling ", ex);
 
             return new ScheduleResponse(false,
-                    "Error scheduling email. Please try later!");
+                    "Error scheduling. Please try later!");
         }
     }
 
@@ -99,17 +98,6 @@ public class Scheduling {
                 .build();
     }
 
-    private JobDetail buildJobDetail(ScheduleRequest scheduleRequest) {
-
-        JobDataMap jobDataMap = new JobDataMap();
-
-        return JobBuilder.newJob(MyJob.class)
-                .withIdentity(UUID.randomUUID().toString(), "my-jobs")
-                .withDescription("Send a Job")
-                .usingJobData(jobDataMap)
-                .storeDurably()
-                .build();
-    }
     private Trigger buildJobTrigger(JobDetail jobDetail, LocalDateTime startAt) {
         ZonedDateTime zdt = startAt.atZone(ZoneId.systemDefault());
         Date date = Date.from(zdt.toInstant());
