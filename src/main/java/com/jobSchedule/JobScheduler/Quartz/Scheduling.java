@@ -48,14 +48,13 @@ public class Scheduling {
                     jobDetail = buildJobDetailSMS(scheduleRequest);
                     break;
             }
-            Trigger trigger = buildJobTrigger(jobDetail, dateTime);
+            Trigger trigger = buildJobTrigger(jobDetail, dateTime, scheduleRequest.isRepeated());
             scheduler.scheduleJob(jobDetail, trigger);
             assert jobDetail != null;
             return new ScheduleResponse(true,
-                    jobDetail.getKey().getName(), jobDetail.getKey().getGroup(), "Scheduled Successfully!");
+                    jobDetail.getKey().getName(), jobDetail.getKey().getGroup(), "Scheduled Successfully!", trigger.getNextFireTime());
         } catch (SchedulerException ex) {
             logger.error("Error scheduling ", ex);
-
             return new ScheduleResponse(false,
                     "Error scheduling. Please try later!");
         }
@@ -98,15 +97,20 @@ public class Scheduling {
                 .build();
     }
 
-    private Trigger buildJobTrigger(JobDetail jobDetail, LocalDateTime startAt) {
+    private Trigger buildJobTrigger(JobDetail jobDetail, LocalDateTime startAt, boolean isRepeated) {
+        SimpleScheduleBuilder schedule;
+        if (isRepeated){
+            schedule = SimpleScheduleBuilder.simpleSchedule().withIntervalInHours(8760).repeatForever().withMisfireHandlingInstructionFireNow();
+        } else {
+            schedule = SimpleScheduleBuilder.simpleSchedule().withMisfireHandlingInstructionFireNow();
+        }
         ZonedDateTime zdt = startAt.atZone(ZoneId.systemDefault());
         Date date = Date.from(zdt.toInstant());
         return TriggerBuilder.newTrigger()
                 .forJob(jobDetail)
                 .withIdentity(jobDetail.getKey().getName(), "my-triggers")
-                .withDescription("Send Rest Trigger")
                 .startAt(date)
-                .withSchedule(SimpleScheduleBuilder.simpleSchedule().withMisfireHandlingInstructionFireNow())
+                .withSchedule(schedule)
                 .build();
     }
 

@@ -10,10 +10,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.stereotype.Component;
 import org.springframework.stereotype.Service;
-
 import javax.annotation.PostConstruct;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -124,18 +123,56 @@ public class EventHandler {
 
     private void onPersist(Employer employer, RequestForm request) {
         if (Objects.equals(request.getDestination(), "AUTO")){request.setDestinationValue(Long.toString(employer.getId()));}
-        switch (request.getWantedAttributeValue()){
-            case "AT":
-                scheduleRequest.setLocalDateTime(employer.getBirthday().atTime(HOUR, MINUTE));
-                runScheduler(request, employer);
+        switch (request.getAttribute()) {
+            case "birthday":
+                scheduleRequest.setRepeated(true);
+                switch (request.getWantedAttributeValue()){
+                    case "AT":
+                        scheduleRequest.setLocalDateTime(employer.getBirthday().withYear(LocalDate.now().getYear()).atTime(HOUR, MINUTE));
+                        runScheduler(request, employer);
+                        break;
+                    case "BEFORE":
+                        scheduleRequest.setLocalDateTime(employer.getBirthday().withYear(LocalDate.now().getYear()).minusDays(request.getDayNumber()).atTime(HOUR, MINUTE));
+                        runScheduler(request, employer);
+                        break;
+                    case "AFTER":
+                        scheduleRequest.setLocalDateTime(employer.getBirthday().withYear(LocalDate.now().getYear()).plusDays(request.getDayNumber()).atTime(HOUR, MINUTE));
+                        runScheduler(request, employer);
+                        break;
+                }
                 break;
-            case "BEFORE":
-                scheduleRequest.setLocalDateTime(employer.getBirthday().minusDays(request.getDayNumber()).atTime(HOUR, MINUTE));
-                runScheduler(request, employer);
+            case "hireDate":
+                scheduleRequest.setRepeated(true);
+                switch (request.getWantedAttributeValue()){
+                    case "AT":
+                        scheduleRequest.setLocalDateTime(employer.getHireDate().withYear(LocalDate.now().getYear()).atTime(HOUR, MINUTE));
+                        runScheduler(request, employer);
+                        break;
+                    case "BEFORE":
+                        scheduleRequest.setLocalDateTime(employer.getHireDate().withYear(LocalDate.now().getYear()).minusDays(request.getDayNumber()).atTime(HOUR, MINUTE));
+                        runScheduler(request, employer);
+                        break;
+                    case "AFTER":
+                        scheduleRequest.setLocalDateTime(employer.getHireDate().withYear(LocalDate.now().getYear()).plusDays(request.getDayNumber()).atTime(HOUR, MINUTE));
+                        runScheduler(request, employer);
+                        break;
+                }
                 break;
-            case "AFTER":
-                scheduleRequest.setLocalDateTime(employer.getEndContract().plusDays(request.getDayNumber()).atTime(HOUR, MINUTE));
-                runScheduler(request, employer);
+            case "endContract":
+                switch (request.getWantedAttributeValue()){
+                    case "AT":
+                        scheduleRequest.setLocalDateTime(employer.getEndContract().atTime(HOUR, MINUTE));
+                        runScheduler(request, employer);
+                        break;
+                    case "BEFORE":
+                        scheduleRequest.setLocalDateTime(employer.getEndContract().minusDays(request.getDayNumber()).atTime(HOUR, MINUTE));
+                        runScheduler(request, employer);
+                        break;
+                    case "AFTER":
+                        scheduleRequest.setLocalDateTime(employer.getEndContract().plusDays(request.getDayNumber()).atTime(HOUR, MINUTE));
+                        runScheduler(request, employer);
+                        break;
+                }
                 break;
         }
     }

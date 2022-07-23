@@ -7,7 +7,8 @@ import javax.persistence.*;
 import java.util.Objects;
 
 @Entity
-@Data
+@Setter
+@Getter
 @AllArgsConstructor
 @NoArgsConstructor
 public class RequestForm {
