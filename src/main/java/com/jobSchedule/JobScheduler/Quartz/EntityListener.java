@@ -31,7 +31,7 @@ public class EntityListener {
         oldContractType = employer.getContractType();
     }
 
-    @PrePersist
+    @PostPersist
     public void notifySubForPersist(Employer employer){
         EventHandler.subscribe(employer);
         EventHandler eventHandler = ApplicationContextHolder.getContext().getBean(EventHandler.class);

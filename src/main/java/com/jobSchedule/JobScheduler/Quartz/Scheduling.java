@@ -4,6 +4,7 @@ import com.jobSchedule.JobScheduler.Quartz.payload.ScheduleRequest;
 import com.jobSchedule.JobScheduler.Quartz.payload.ScheduleResponse;
 import com.jobSchedule.JobScheduler.web.Service.EmployerService;
 import org.quartz.*;
+import org.quartz.impl.matchers.GroupMatcher;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -12,21 +13,23 @@ import org.springframework.stereotype.Component;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
-import java.util.Date;
-import java.util.UUID;
+import java.util.*;
+import java.util.stream.Collectors;
+
 @Component
 public class Scheduling {
     @Autowired
     private JavaMailSender javaMailSender;
     @Autowired
     EmployerService employerService;
-    private final Scheduler scheduler;
+    @Autowired
+    private Scheduler scheduler;
     private static final Logger logger = LoggerFactory.getLogger(Scheduling.class);
 
-    @Autowired
-    public Scheduling(Scheduler scheduler) {
-        this.scheduler = scheduler;
-    }
+//    @Autowired
+//    public Scheduling(Scheduler scheduler) {
+//        this.scheduler = scheduler;
+//    }
 
     public ScheduleResponse createSchedule (ScheduleRequest scheduleRequest){
         try {
@@ -49,10 +52,17 @@ public class Scheduling {
                     break;
             }
             Trigger trigger = buildJobTrigger(jobDetail, dateTime, scheduleRequest.isRepeated());
-            scheduler.scheduleJob(jobDetail, trigger);
             assert jobDetail != null;
-            return new ScheduleResponse(true,
+            ScheduleResponse scheduleResponse = new ScheduleResponse(true,
                     jobDetail.getKey().getName(), jobDetail.getKey().getGroup(), "Scheduled Successfully!", trigger.getNextFireTime());
+            jobDetail.getJobDataMap().put(jobDetail.getKey().getName(), scheduleResponse);
+            scheduler.scheduleJob(jobDetail, trigger);
+            scheduleResponse.setAlertTime(trigger.getNextFireTime());
+//            scheduler.getJobDetail(jobDetail.getKey()).getJobDataMap().put(jobDetail.getKey().getName(), scheduleResponse);
+//            jobDetail.getJobDataMap().put(jobDetail.getKey().getName(), scheduleResponse);
+//            Date next = trigger.getNextFireTime();
+//            System.out.println("next = " + next);
+            return scheduleResponse;
         } catch (SchedulerException ex) {
             logger.error("Error scheduling ", ex);
             return new ScheduleResponse(false,
@@ -113,6 +123,51 @@ public class Scheduling {
                 .withSchedule(schedule)
                 .build();
     }
+    public List<ScheduleResponse> getAllJobs(){
+        try {
+            List<ScheduleResponse> scheduleResponses = new ArrayList<>();
+            Set<JobKey> jobKeys =  scheduler.getJobKeys(GroupMatcher.anyGroup());
+            for (JobKey jobKey : jobKeys){
+                try {
+                    JobDetail jobDetail = scheduler.getJobDetail(jobKey);
+                    scheduleResponses.add((ScheduleResponse) jobDetail.getJobDataMap().get(jobKey.getName()));
+                } catch (SchedulerException e){
+                    logger.error(e.getMessage(), e);
+                }
+            }
+            return scheduleResponses;
+        } catch (SchedulerException e){
+            logger.error(e.getMessage());
+            return Collections.emptyList();
+        }
+    }
+    public ScheduleResponse getOneJob(String jobGroup, String jobKey){
+        try {
+            JobDetail jobDetail = scheduler.getJobDetail(new JobKey(jobKey, jobGroup));
+            return (ScheduleResponse) jobDetail.getJobDataMap().get(jobKey);
+        } catch (SchedulerException | NullPointerException e) {
+            logger.error(e.getMessage());
+            return null;
+        }
+    }
+
+    public void updateJob(String jobGroup, String jobKey, ScheduleResponse scheduleResponse){
+        try {
+            JobDetail jobDetail = scheduler.getJobDetail(new JobKey(jobKey, jobGroup));
+            jobDetail.getJobDataMap().put(jobDetail.getKey().getName(), scheduleResponse);
+        } catch (SchedulerException | NullPointerException e) {
+            logger.error(e.getMessage());
+        }
+    }
+
+    public void deleteJob(String jobGroup, String jobKey){
+        try {
+            scheduler.deleteJob(new JobKey(jobKey, jobGroup));
+        } catch (SchedulerException e) {
+            logger.error(e.getMessage());
+        }
+    }
+
 
 }
 
