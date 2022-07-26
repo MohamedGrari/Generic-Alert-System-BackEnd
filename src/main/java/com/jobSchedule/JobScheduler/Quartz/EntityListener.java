@@ -4,14 +4,19 @@ import com.jobSchedule.JobScheduler.web.Entity.Employer;
 import lombok.NoArgsConstructor;
 import org.springframework.stereotype.Component;
 import javax.persistence.*;
+import java.time.LocalDate;
 
 @NoArgsConstructor
 @Component
 public class EntityListener {
+    private static LocalDate oldEndContract;
     private static String oldPosition;
     private static String oldStatus;
     private static String oldContractType;
 
+    public static LocalDate getOldEndContract() {
+        return oldEndContract;
+    }
     public static String getOldPosition() {
         return oldPosition;
     }
@@ -29,6 +34,7 @@ public class EntityListener {
         oldPosition = employer.getPosition();
         oldStatus = employer.getStatus();
         oldContractType = employer.getContractType();
+        oldEndContract = employer.getEndContract();
     }
 
     @PostPersist

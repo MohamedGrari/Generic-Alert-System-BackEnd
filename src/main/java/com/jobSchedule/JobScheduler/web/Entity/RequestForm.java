@@ -36,11 +36,19 @@ public class RequestForm {
         EventHandler eventHandler = ApplicationContextHolder.getContext().getBean(EventHandler.class);
         eventHandler.handleRequestFormPersisting(this);
     }
+
+    @PreUpdate
+    private void onUpdate(){
+        EventHandler eventHandler = ApplicationContextHolder.getContext().getBean(EventHandler.class);
+        eventHandler.handleRequestFormUpdating(this);
+    }
     @PreRemove
     private void onRemove(){
         if (Objects.equals(entity, "employer")){
             EventHandler.unSubscribe(this);
         }
+        EventHandler eventHandler = ApplicationContextHolder.getContext().getBean(EventHandler.class);
+        eventHandler.handleRequestFormDeleting(this);
     }
 
 }

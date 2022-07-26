@@ -6,6 +6,9 @@ import com.jobSchedule.JobScheduler.web.Entity.Employer;
 import com.jobSchedule.JobScheduler.web.Entity.RequestForm;
 import com.jobSchedule.JobScheduler.web.Service.EmployerService;
 import com.jobSchedule.JobScheduler.web.Service.RequestFormService;
+import org.quartz.JobDetail;
+import org.quartz.JobKey;
+import org.quartz.Trigger;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -69,7 +72,12 @@ public class EventHandler {
             if (!request.isUpdate()) continue;
             onUpdate(employer, request);
         }
+        if(!EntityListener.getOldEndContract().isEqual(employer.getEndContract())){
+            scheduling.updateEndContract(employer, requests);
+        }
     }
+
+
 
     private void onUpdate(Employer employer, RequestForm request) {
         String position = employer.getPosition();
@@ -191,11 +199,36 @@ public class EventHandler {
         scheduleRequest.setJobAlertMode(request.getAlertMode());
         scheduleRequest.setJobDestination(request.getDestination());
         scheduleRequest.setJobDestinationValue(request.getDestinationValue());
-        ScheduleResponse scheduleResponse = scheduling.createSchedule(scheduleRequest);
+        scheduleRequest.setRequestFormId(request.getId());
+        scheduleRequest.setEmployerId(employer.getId());
+        ScheduleResponse scheduleResponse;
+        scheduleResponse = scheduling.createSchedule(scheduleRequest);
         logger.info("IT'S WORKING");
         System.out.println("request = " + request);
         System.out.println("employer = " + employer);
         System.out.println("scheduling = " + scheduleResponse);
+        }
+
+    public void handleRequestFormUpdating(RequestForm requestForm) {
+        handleRequestFormDeleting(requestForm);
+        for (Employer employer : employers) {
+            String[] entityCriteriaValues = {employer.getPosition(), employer.getStatus(), employer.getContractType(), null};
+            if (!Arrays.asList(entityCriteriaValues).contains(requestForm.getEntityCriteriaValue())) {continue;}
+            if(requestForm.isUpdate()){
+                onUpdate(employer, requestForm);
+            } else {
+                onPersist(employer, requestForm);
+            }
+        }
+    }
+
+    public void handleRequestFormDeleting(RequestForm requestForm) {
+        List<ScheduleResponse> scheduleResponses = scheduling.getAllJobs();
+        for (ScheduleResponse scheduleResponse : scheduleResponses) {
+            if (Objects.equals(scheduleResponse.getRequestFormId(), requestForm.getId())) {
+                scheduling.deleteJob(scheduleResponse.getJobGroup(), scheduleResponse.getJobId());
+            }
+        }
     }
 }
 

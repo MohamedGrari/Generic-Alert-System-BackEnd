@@ -20,5 +20,7 @@ public class ScheduleRequest {
     private String jobAlertMode;
     private String jobDestination;
     private String jobDestinationValue;
+    private Long employerId;
+    private Long requestFormId;
     private boolean isRepeated = false;
 }

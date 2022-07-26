@@ -2,6 +2,8 @@ package com.jobSchedule.JobScheduler.Quartz;
 
 import com.jobSchedule.JobScheduler.Quartz.payload.ScheduleRequest;
 import com.jobSchedule.JobScheduler.Quartz.payload.ScheduleResponse;
+import com.jobSchedule.JobScheduler.web.Entity.Employer;
+import com.jobSchedule.JobScheduler.web.Entity.RequestForm;
 import com.jobSchedule.JobScheduler.web.Service.EmployerService;
 import org.quartz.*;
 import org.quartz.impl.matchers.GroupMatcher;
@@ -14,7 +16,6 @@ import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.util.*;
-import java.util.stream.Collectors;
 
 @Component
 public class Scheduling {
@@ -25,11 +26,6 @@ public class Scheduling {
     @Autowired
     private Scheduler scheduler;
     private static final Logger logger = LoggerFactory.getLogger(Scheduling.class);
-
-//    @Autowired
-//    public Scheduling(Scheduler scheduler) {
-//        this.scheduler = scheduler;
-//    }
 
     public ScheduleResponse createSchedule (ScheduleRequest scheduleRequest){
         try {
@@ -53,15 +49,11 @@ public class Scheduling {
             }
             Trigger trigger = buildJobTrigger(jobDetail, dateTime, scheduleRequest.isRepeated());
             assert jobDetail != null;
-            ScheduleResponse scheduleResponse = new ScheduleResponse(true,
-                    jobDetail.getKey().getName(), jobDetail.getKey().getGroup(), "Scheduled Successfully!", trigger.getNextFireTime());
+            ScheduleResponse scheduleResponse = new ScheduleResponse(true, jobDetail.getKey().getName(),
+                    jobDetail.getKey().getGroup(), "Scheduled Successfully!", trigger.getNextFireTime(), scheduleRequest.getEmployerId(), scheduleRequest.getRequestFormId());
             jobDetail.getJobDataMap().put(jobDetail.getKey().getName(), scheduleResponse);
             scheduler.scheduleJob(jobDetail, trigger);
             scheduleResponse.setAlertTime(trigger.getNextFireTime());
-//            scheduler.getJobDetail(jobDetail.getKey()).getJobDataMap().put(jobDetail.getKey().getName(), scheduleResponse);
-//            jobDetail.getJobDataMap().put(jobDetail.getKey().getName(), scheduleResponse);
-//            Date next = trigger.getNextFireTime();
-//            System.out.println("next = " + next);
             return scheduleResponse;
         } catch (SchedulerException ex) {
             logger.error("Error scheduling ", ex);
@@ -150,16 +142,6 @@ public class Scheduling {
             return null;
         }
     }
-
-    public void updateJob(String jobGroup, String jobKey, ScheduleResponse scheduleResponse){
-        try {
-            JobDetail jobDetail = scheduler.getJobDetail(new JobKey(jobKey, jobGroup));
-            jobDetail.getJobDataMap().put(jobDetail.getKey().getName(), scheduleResponse);
-        } catch (SchedulerException | NullPointerException e) {
-            logger.error(e.getMessage());
-        }
-    }
-
     public void deleteJob(String jobGroup, String jobKey){
         try {
             scheduler.deleteJob(new JobKey(jobKey, jobGroup));
@@ -168,6 +150,34 @@ public class Scheduling {
         }
     }
 
+
+    public void updateEndContract(Employer employer, List<RequestForm> requests) {
+        List<ScheduleResponse> scheduleResponses = getAllJobs();
+        for (ScheduleResponse scheduleResponse : scheduleResponses) {
+            if (!Objects.equals(scheduleResponse.getEmployerId(), employer.getId())) {
+                continue;
+            }
+            if(employer.getEndContract() == null){
+                deleteJob(scheduleResponse.getJobGroup(), scheduleResponse.getJobId());
+                return;
+            }
+            for(RequestForm request : requests){
+                if(!Objects.equals(request.getId(), scheduleResponse.getRequestFormId())){
+                    continue;
+                }
+                try {
+                    Trigger oldTrigger = scheduler.getTrigger(new TriggerKey(scheduleResponse.getJobId(), "my-triggers"));
+                    JobDetail jobDetail = scheduler.getJobDetail(new JobKey(scheduleResponse.getJobId(), scheduleResponse.getJobGroup()) );
+                    Trigger newTrigger = buildJobTrigger(jobDetail, employer.getEndContract().atStartOfDay(), false);
+                    scheduler.rescheduleJob(oldTrigger.getKey(), newTrigger);
+                    break;
+                } catch (SchedulerException e){
+                    logger.error(e.getMessage(), e);
+                }
+            }
+
+        }
+    }
 
 }
 
