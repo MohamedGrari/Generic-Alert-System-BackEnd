@@ -20,11 +20,9 @@ public class EntityListener {
     public static String getOldPosition() {
         return oldPosition;
     }
-
     public static String getOldStatus() {
         return oldStatus;
     }
-
     public static String getOldContractType() {
         return oldContractType;
     }
@@ -36,7 +34,6 @@ public class EntityListener {
         oldContractType = employer.getContractType();
         oldEndContract = employer.getEndContract();
     }
-
     @PostPersist
     public void notifySubForPersist(Employer employer){
         EventHandler.subscribe(employer);
@@ -45,12 +42,15 @@ public class EntityListener {
     }
     @PreUpdate
     public void notifySubForUpdate(Employer employer){
+        EventHandler.updateSubscriber(employer);
         EventHandler eventHandler = ApplicationContextHolder.getContext().getBean(EventHandler.class);
         eventHandler.handleUpdating(employer);
+//        eventHandler.handleEmployerUpdating(employer);
     }
     @PreRemove
     public void unsubscribe(Employer employer){
         EventHandler.unSubscribe(employer);
+        EventHandler eventHandler = ApplicationContextHolder.getContext().getBean(EventHandler.class);
+        eventHandler.handleEmployerDeleting(employer);
     }
-
 }

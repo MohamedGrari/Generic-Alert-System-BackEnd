@@ -1,7 +1,6 @@
 package com.jobSchedule.JobScheduler.web.Controller;
 
 import com.jobSchedule.JobScheduler.Quartz.payload.ScheduleResponse;
-import com.jobSchedule.JobScheduler.web.Entity.RequestForm;
 import com.jobSchedule.JobScheduler.web.Service.JobService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.GetMapping;

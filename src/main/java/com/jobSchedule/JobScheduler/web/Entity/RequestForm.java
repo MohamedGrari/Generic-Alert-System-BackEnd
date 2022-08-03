@@ -39,12 +39,13 @@ public class RequestForm {
 
     @PreUpdate
     private void onUpdate(){
+        EventHandler.updateSubscriber(this);
         EventHandler eventHandler = ApplicationContextHolder.getContext().getBean(EventHandler.class);
         eventHandler.handleRequestFormUpdating(this);
     }
     @PreRemove
     private void onRemove(){
-        if (Objects.equals(entity, "employer")){
+        if (Objects.equals(this.getEntity(), "employer")){
             EventHandler.unSubscribe(this);
         }
         EventHandler eventHandler = ApplicationContextHolder.getContext().getBean(EventHandler.class);

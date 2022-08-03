@@ -6,9 +6,6 @@ import com.jobSchedule.JobScheduler.web.Entity.Employer;
 import com.jobSchedule.JobScheduler.web.Entity.RequestForm;
 import com.jobSchedule.JobScheduler.web.Service.EmployerService;
 import com.jobSchedule.JobScheduler.web.Service.RequestFormService;
-import org.quartz.JobDetail;
-import org.quartz.JobKey;
-import org.quartz.Trigger;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -61,36 +58,74 @@ public class EventHandler {
         requests.add(requestForm);
     }
     public static void unSubscribe(RequestForm requestForm){
-        requests.remove(requestForm);
+        for(RequestForm requestForm1 : requests){
+            if (!Objects.equals(requestForm1.getId(), requestForm.getId())){
+                continue;
+            } else {
+                requests.remove(requestForm1);
+                return;
+            }
+        }
     }
     public static void unSubscribe(Employer employer){
-        employers.remove(employer);
+        for(Employer employer1 : employers){
+            if (!Objects.equals(employer1.getId(), employer.getId())){
+                continue;
+            } else {
+                employers.remove(employer1);
+                return;
+            }
+        }
+    }
+    public static void updateSubscriber(RequestForm requestForm){
+        for(RequestForm requestForm1 : requests){
+            if (!Objects.equals(requestForm1.getId(), requestForm.getId())){
+                continue;
+            } else {
+                requests.set(requests.indexOf(requestForm1), requestForm);
+                return;
+            }
+        }
+    }
+    public static void updateSubscriber(Employer employer){
+        for(Employer employer1 : employers){
+            if (!Objects.equals(employer1.getId(), employer.getId())){
+                continue;
+            } else {
+                employers.set(employers.indexOf(employer1), employer);
+                return;
+            }
+        }
     }
 
     public void handleUpdating(Employer employer) {
-        for(RequestForm request : requests){
-            if (!request.isUpdate()) continue;
-            onUpdate(employer, request);
-        }
-        if(!EntityListener.getOldEndContract().isEqual(employer.getEndContract())){
-            scheduling.updateEndContract(employer, requests);
-        }
-    }
-
-
-
-    private void onUpdate(Employer employer, RequestForm request) {
-        String position = employer.getPosition();
-        String status = employer.getStatus();
-        String contractType = employer.getContractType();
         String oldPosition = EntityListener.getOldPosition();
         String oldStatus = EntityListener.getOldStatus();
         String oldContractType = EntityListener.getOldContractType();
-        String[] entityCriteriaValues = {position, status, contractType, null};
+        LocalDate oldEndContract = EntityListener.getOldEndContract();
+        String position = employer.getPosition();
+        String status = employer.getStatus();
+        String contractType = employer.getContractType();
         boolean positionIsChanged = !Objects.equals(position, oldPosition);
-        boolean StatusIsChanged = !Objects.equals(status, oldStatus);
+        boolean statusIsChanged = !Objects.equals(status, oldStatus);
         boolean contractTypeIsChanged = !Objects.equals(contractType, oldContractType);
-        if (!Arrays.asList(entityCriteriaValues).contains(request.getEntityCriteriaValue())) return;
+        boolean endContractIsChanged = !Objects.equals(employer.getEndContract(), oldEndContract);
+        if(!positionIsChanged && !statusIsChanged && !contractTypeIsChanged && !endContractIsChanged)return;
+        for (RequestForm request : requests) {
+            if (endContractIsChanged && Objects.equals(request.getAttribute(), "endContract")){
+                    handleRequestFormUpdating(request);
+            }
+            if (positionIsChanged || statusIsChanged || contractTypeIsChanged){
+                onUpdate(employer, request, positionIsChanged, statusIsChanged, contractTypeIsChanged);
+                if(positionIsChanged && Objects.equals(request.getEntityCriteria(), "position") ||
+                        statusIsChanged && Objects.equals(request.getEntityCriteria(), "status") ||
+                        contractTypeIsChanged && Objects.equals(request.getEntityCriteria(), "contractType"))
+                    handleEmployerUpdating(employer);
+            }
+        }
+    }
+
+    private void onUpdate(Employer employer, RequestForm request, boolean positionIsChanged, boolean statusIsChanged, boolean contractTypeIsChanged) {
         if (Objects.equals(request.getDestination(), "AUTO")){request.setDestinationValue(Long.toString(employer.getId()));}
         String wantedAttributeValue = request.getWantedAttributeValue();
         boolean wantedAttributeValueIsWHATEVER = (Objects.equals(wantedAttributeValue, "WHATEVER"));
@@ -98,21 +133,21 @@ public class EventHandler {
         switch (request.getAttribute()) {
             case "position":
                 if (!positionIsChanged) {return;}
-                if ((wantedAttributeValueIsWHATEVER) || (Objects.equals(wantedAttributeValue, position))) {
+                if ((wantedAttributeValueIsWHATEVER) || (Objects.equals(wantedAttributeValue, employer.getPosition()))) {
                     runScheduler(request, employer);}
                 break;
             case "status":
-                if (!StatusIsChanged) {return;}
-                if ((wantedAttributeValueIsWHATEVER) || (Objects.equals(wantedAttributeValue, status))) {
+                if (!statusIsChanged) {return;}
+                if ((wantedAttributeValueIsWHATEVER) || (Objects.equals(wantedAttributeValue, employer.getStatus()))) {
                     runScheduler(request, employer); }
                 break;
             case "contractType":
                 if (!contractTypeIsChanged) {return;}
-                if ((wantedAttributeValueIsWHATEVER) || (Objects.equals(wantedAttributeValue, contractType))) {
+                if ((wantedAttributeValueIsWHATEVER) || (Objects.equals(wantedAttributeValue, employer.getContractType()))) {
                     runScheduler(request, employer);}
                 break;
             case "WHATEVER":
-                if (!positionIsChanged && !StatusIsChanged && !contractTypeIsChanged) {
+                if (!positionIsChanged && !statusIsChanged && !contractTypeIsChanged) {
                     return;
                 }
                 runScheduler(request, employer);
@@ -193,7 +228,14 @@ public class EventHandler {
             onPersist(employer, requestForm);
         }
     }
-
+    public void handleEmployerPersisting(Employer employer){
+        for (RequestForm requestForm : requests) {
+            if(requestForm.isUpdate()) return;
+            String[] entityCriteriaValues = {employer.getPosition(), employer.getStatus(), employer.getContractType(), null};
+            if (!Arrays.asList(entityCriteriaValues).contains(requestForm.getEntityCriteriaValue())) {continue;}
+            onPersist(employer, requestForm);
+        }
+    }
     private void runScheduler(RequestForm request, Employer employer) {
         scheduleRequest.setJobText(request.getText());
         scheduleRequest.setJobAlertMode(request.getAlertMode());
@@ -201,8 +243,7 @@ public class EventHandler {
         scheduleRequest.setJobDestinationValue(request.getDestinationValue());
         scheduleRequest.setRequestFormId(request.getId());
         scheduleRequest.setEmployerId(employer.getId());
-        ScheduleResponse scheduleResponse;
-        scheduleResponse = scheduling.createSchedule(scheduleRequest);
+        ScheduleResponse scheduleResponse = scheduling.createSchedule(scheduleRequest);
         logger.info("IT'S WORKING");
         System.out.println("request = " + request);
         System.out.println("employer = " + employer);
@@ -211,15 +252,7 @@ public class EventHandler {
 
     public void handleRequestFormUpdating(RequestForm requestForm) {
         handleRequestFormDeleting(requestForm);
-        for (Employer employer : employers) {
-            String[] entityCriteriaValues = {employer.getPosition(), employer.getStatus(), employer.getContractType(), null};
-            if (!Arrays.asList(entityCriteriaValues).contains(requestForm.getEntityCriteriaValue())) {continue;}
-            if(requestForm.isUpdate()){
-                onUpdate(employer, requestForm);
-            } else {
-                onPersist(employer, requestForm);
-            }
-        }
+        handleRequestFormPersisting(requestForm);
     }
 
     public void handleRequestFormDeleting(RequestForm requestForm) {
@@ -230,5 +263,17 @@ public class EventHandler {
             }
         }
     }
-}
+    public void handleEmployerDeleting(Employer employer) {
+        List<ScheduleResponse> scheduleResponses = scheduling.getAllJobs();
+        for (ScheduleResponse scheduleResponse : scheduleResponses) {
+            if (Objects.equals(scheduleResponse.getEmployerId(), employer.getId())) {
+                scheduling.deleteJob(scheduleResponse.getJobGroup(), scheduleResponse.getJobId());
+            }
+        }
+    }
 
+    public void handleEmployerUpdating(Employer employer) {
+        handleEmployerDeleting(employer);
+        handleEmployerPersisting(employer);
+    }
+}

@@ -2,8 +2,6 @@ package com.jobSchedule.JobScheduler.Quartz;
 
 import com.jobSchedule.JobScheduler.Quartz.payload.ScheduleRequest;
 import com.jobSchedule.JobScheduler.Quartz.payload.ScheduleResponse;
-import com.jobSchedule.JobScheduler.web.Entity.Employer;
-import com.jobSchedule.JobScheduler.web.Entity.RequestForm;
 import com.jobSchedule.JobScheduler.web.Service.EmployerService;
 import org.quartz.*;
 import org.quartz.impl.matchers.GroupMatcher;
@@ -50,7 +48,8 @@ public class Scheduling {
             Trigger trigger = buildJobTrigger(jobDetail, dateTime, scheduleRequest.isRepeated());
             assert jobDetail != null;
             ScheduleResponse scheduleResponse = new ScheduleResponse(true, jobDetail.getKey().getName(),
-                    jobDetail.getKey().getGroup(), "Scheduled Successfully!", trigger.getNextFireTime(), scheduleRequest.getEmployerId(), scheduleRequest.getRequestFormId());
+                    jobDetail.getKey().getGroup(), "Scheduled Successfully!", trigger.getNextFireTime(),
+                    scheduleRequest.getEmployerId(), scheduleRequest.getRequestFormId());
             jobDetail.getJobDataMap().put(jobDetail.getKey().getName(), scheduleResponse);
             scheduler.scheduleJob(jobDetail, trigger);
             scheduleResponse.setAlertTime(trigger.getNextFireTime());
@@ -149,35 +148,33 @@ public class Scheduling {
             logger.error(e.getMessage());
         }
     }
-
-
-    public void updateEndContract(Employer employer, List<RequestForm> requests) {
-        List<ScheduleResponse> scheduleResponses = getAllJobs();
-        for (ScheduleResponse scheduleResponse : scheduleResponses) {
-            if (!Objects.equals(scheduleResponse.getEmployerId(), employer.getId())) {
-                continue;
-            }
-            if(employer.getEndContract() == null){
-                deleteJob(scheduleResponse.getJobGroup(), scheduleResponse.getJobId());
-                return;
-            }
-            for(RequestForm request : requests){
-                if(!Objects.equals(request.getId(), scheduleResponse.getRequestFormId())){
-                    continue;
-                }
-                try {
-                    Trigger oldTrigger = scheduler.getTrigger(new TriggerKey(scheduleResponse.getJobId(), "my-triggers"));
-                    JobDetail jobDetail = scheduler.getJobDetail(new JobKey(scheduleResponse.getJobId(), scheduleResponse.getJobGroup()) );
-                    Trigger newTrigger = buildJobTrigger(jobDetail, employer.getEndContract().atStartOfDay(), false);
-                    scheduler.rescheduleJob(oldTrigger.getKey(), newTrigger);
-                    break;
-                } catch (SchedulerException e){
-                    logger.error(e.getMessage(), e);
-                }
-            }
-
-        }
-    }
+//    public void updateEndContract(Employer employer, List<RequestForm> requests) {
+//        List<ScheduleResponse> scheduleResponses = getAllJobs();
+//        for (ScheduleResponse scheduleResponse : scheduleResponses) {
+//            if (!Objects.equals(scheduleResponse.getEmployerId(), employer.getId())) {
+//                continue;
+//            }
+//            if(employer.getEndContract() == null){
+//                deleteJob(scheduleResponse.getJobGroup(), scheduleResponse.getJobId());
+//                return;
+//            }
+//            for(RequestForm request : requests){
+//                if(!Objects.equals(request.getId(), scheduleResponse.getRequestFormId())){
+//                    continue;
+//                }
+//                try {
+//                    Trigger oldTrigger = scheduler.getTrigger(new TriggerKey(scheduleResponse.getJobId(), "my-triggers"));
+//                    JobDetail jobDetail = scheduler.getJobDetail(new JobKey(scheduleResponse.getJobId(), scheduleResponse.getJobGroup()) );
+//                    Trigger newTrigger = buildJobTrigger(jobDetail, employer.getEndContract().atStartOfDay(), false);
+//                    scheduler.rescheduleJob(oldTrigger.getKey(), newTrigger);
+//                    break;
+//                } catch (SchedulerException e){
+//                    logger.error(e.getMessage(), e);
+//                }
+//            }
+//
+//        }
+//    }
 
 }
 
