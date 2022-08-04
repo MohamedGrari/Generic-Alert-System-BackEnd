@@ -12,6 +12,10 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import javax.annotation.PostConstruct;
+import java.beans.IntrospectionException;
+import java.beans.PropertyDescriptor;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -99,10 +103,12 @@ public class EventHandler {
     }
 
     public void handleUpdating(Employer employer) {
+        //TODO
         String oldPosition = EntityListener.getOldPosition();
         String oldStatus = EntityListener.getOldStatus();
         String oldContractType = EntityListener.getOldContractType();
         LocalDate oldEndContract = EntityListener.getOldEndContract();
+        //TODO
         String position = employer.getPosition();
         String status = employer.getStatus();
         String contractType = employer.getContractType();
@@ -110,13 +116,17 @@ public class EventHandler {
         boolean statusIsChanged = !Objects.equals(status, oldStatus);
         boolean contractTypeIsChanged = !Objects.equals(contractType, oldContractType);
         boolean endContractIsChanged = !Objects.equals(employer.getEndContract(), oldEndContract);
+        //TODO
         if(!positionIsChanged && !statusIsChanged && !contractTypeIsChanged && !endContractIsChanged)return;
         for (RequestForm request : requests) {
+            //TODO
             if (endContractIsChanged && Objects.equals(request.getAttribute(), "endContract")){
                     handleRequestFormUpdating(request);
             }
+            //TODO
             if (positionIsChanged || statusIsChanged || contractTypeIsChanged){
                 onUpdate(employer, request, positionIsChanged, statusIsChanged, contractTypeIsChanged);
+                //TODO
                 if(positionIsChanged && Objects.equals(request.getEntityCriteria(), "position") ||
                         statusIsChanged && Objects.equals(request.getEntityCriteria(), "status") ||
                         contractTypeIsChanged && Objects.equals(request.getEntityCriteria(), "contractType"))
@@ -130,6 +140,7 @@ public class EventHandler {
         String wantedAttributeValue = request.getWantedAttributeValue();
         boolean wantedAttributeValueIsWHATEVER = (Objects.equals(wantedAttributeValue, "WHATEVER"));
         scheduleRequest.setLocalDateTime(LocalDateTime.now().plusMinutes(OFFSET));
+        //TODO
         switch (request.getAttribute()) {
             case "position":
                 if (!positionIsChanged) {return;}
@@ -164,60 +175,92 @@ public class EventHandler {
         }
     }
 
+    public Object invokeGetter(Object obj, String variableName)
+    {
+        try {
+            PropertyDescriptor pd = new PropertyDescriptor(variableName, obj.getClass());
+            Method getter = pd.getReadMethod();
+            Object f = getter.invoke(obj);
+            System.out.println(f);
+            return f;
+        } catch (IllegalAccessException | IllegalArgumentException | InvocationTargetException |
+                 IntrospectionException e) {
+            e.printStackTrace();
+            return null;
+        }
+    }
     private void onPersist(Employer employer, RequestForm request) {
         if (Objects.equals(request.getDestination(), "AUTO")){request.setDestinationValue(Long.toString(employer.getId()));}
-        switch (request.getAttribute()) {
-            case "birthday":
-                scheduleRequest.setRepeated(true);
-                switch (request.getWantedAttributeValue()){
-                    case "AT":
-                        scheduleRequest.setLocalDateTime(employer.getBirthday().withYear(LocalDate.now().getYear()).atTime(HOUR, MINUTE));
-                        runScheduler(request, employer);
-                        break;
-                    case "BEFORE":
-                        scheduleRequest.setLocalDateTime(employer.getBirthday().withYear(LocalDate.now().getYear()).minusDays(request.getDayNumber()).atTime(HOUR, MINUTE));
-                        runScheduler(request, employer);
-                        break;
-                    case "AFTER":
-                        scheduleRequest.setLocalDateTime(employer.getBirthday().withYear(LocalDate.now().getYear()).plusDays(request.getDayNumber()).atTime(HOUR, MINUTE));
-                        runScheduler(request, employer);
-                        break;
-                }
+        if (Objects.equals(request.getAttribute(), "birthday") || Objects.equals(request.getAttribute(), "hireDate")){
+            scheduleRequest.setRepeated(true);
+        }
+        LocalDate localDate = (LocalDate)invokeGetter(employer, request.getAttribute());
+        switch (request.getWantedAttributeValue()){
+            case "AT":
+                scheduleRequest.setLocalDateTime(localDate.withYear(LocalDate.now().getYear()).atTime(HOUR, MINUTE));
+                runScheduler(request, employer);
                 break;
-            case "hireDate":
-                scheduleRequest.setRepeated(true);
-                switch (request.getWantedAttributeValue()){
-                    case "AT":
-                        scheduleRequest.setLocalDateTime(employer.getHireDate().withYear(LocalDate.now().getYear()).atTime(HOUR, MINUTE));
-                        runScheduler(request, employer);
-                        break;
-                    case "BEFORE":
-                        scheduleRequest.setLocalDateTime(employer.getHireDate().withYear(LocalDate.now().getYear()).minusDays(request.getDayNumber()).atTime(HOUR, MINUTE));
-                        runScheduler(request, employer);
-                        break;
-                    case "AFTER":
-                        scheduleRequest.setLocalDateTime(employer.getHireDate().withYear(LocalDate.now().getYear()).plusDays(request.getDayNumber()).atTime(HOUR, MINUTE));
-                        runScheduler(request, employer);
-                        break;
-                }
+            case "BEFORE" :
+                scheduleRequest.setLocalDateTime(localDate.withYear(LocalDate.now().getYear()).minusDays(request.getDayNumber()).atTime(HOUR, MINUTE));
+                runScheduler(request, employer);
                 break;
-            case "endContract":
-                switch (request.getWantedAttributeValue()){
-                    case "AT":
-                        scheduleRequest.setLocalDateTime(employer.getEndContract().atTime(HOUR, MINUTE));
-                        runScheduler(request, employer);
-                        break;
-                    case "BEFORE":
-                        scheduleRequest.setLocalDateTime(employer.getEndContract().minusDays(request.getDayNumber()).atTime(HOUR, MINUTE));
-                        runScheduler(request, employer);
-                        break;
-                    case "AFTER":
-                        scheduleRequest.setLocalDateTime(employer.getEndContract().plusDays(request.getDayNumber()).atTime(HOUR, MINUTE));
-                        runScheduler(request, employer);
-                        break;
-                }
+            case "AFTER" :
+                scheduleRequest.setLocalDateTime(localDate.withYear(LocalDate.now().getYear()).plusDays(request.getDayNumber()).atTime(HOUR, MINUTE));
+                runScheduler(request, employer);
                 break;
         }
+//        switch (request.getAttribute()) {
+//            case "birthday":
+//                scheduleRequest.setRepeated(true);
+//                switch (request.getWantedAttributeValue()){
+//                    case "AT":
+//                        scheduleRequest.setLocalDateTime(employer.getBirthday().withYear(LocalDate.now().getYear()).atTime(HOUR, MINUTE));
+//                        runScheduler(request, employer);
+//                        break;
+//                    case "BEFORE":
+//                        scheduleRequest.setLocalDateTime(employer.getBirthday().withYear(LocalDate.now().getYear()).minusDays(request.getDayNumber()).atTime(HOUR, MINUTE));
+//                        runScheduler(request, employer);
+//                        break;
+//                    case "AFTER":
+//                        scheduleRequest.setLocalDateTime(employer.getBirthday().withYear(LocalDate.now().getYear()).plusDays(request.getDayNumber()).atTime(HOUR, MINUTE));
+//                        runScheduler(request, employer);
+//                        break;
+//                }
+//                break;
+//            case "hireDate":
+//                scheduleRequest.setRepeated(true);
+//                switch (request.getWantedAttributeValue()){
+//                    case "AT":
+//                        scheduleRequest.setLocalDateTime(employer.getHireDate().withYear(LocalDate.now().getYear()).atTime(HOUR, MINUTE));
+//                        runScheduler(request, employer);
+//                        break;
+//                    case "BEFORE":
+//                        scheduleRequest.setLocalDateTime(employer.getHireDate().withYear(LocalDate.now().getYear()).minusDays(request.getDayNumber()).atTime(HOUR, MINUTE));
+//                        runScheduler(request, employer);
+//                        break;
+//                    case "AFTER":
+//                        scheduleRequest.setLocalDateTime(employer.getHireDate().withYear(LocalDate.now().getYear()).plusDays(request.getDayNumber()).atTime(HOUR, MINUTE));
+//                        runScheduler(request, employer);
+//                        break;
+//                }
+//                break;
+//            case "endContract":
+//                switch (request.getWantedAttributeValue()){
+//                    case "AT":
+//                        scheduleRequest.setLocalDateTime(employer.getEndContract().atTime(HOUR, MINUTE));
+//                        runScheduler(request, employer);
+//                        break;
+//                    case "BEFORE":
+//                        scheduleRequest.setLocalDateTime(employer.getEndContract().minusDays(request.getDayNumber()).atTime(HOUR, MINUTE));
+//                        runScheduler(request, employer);
+//                        break;
+//                    case "AFTER":
+//                        scheduleRequest.setLocalDateTime(employer.getEndContract().plusDays(request.getDayNumber()).atTime(HOUR, MINUTE));
+//                        runScheduler(request, employer);
+//                        break;
+//                }
+//                break;
+//        }
     }
 
     public void handleRequestFormPersisting(RequestForm requestForm){
@@ -231,6 +274,7 @@ public class EventHandler {
     public void handleEmployerPersisting(Employer employer){
         for (RequestForm requestForm : requests) {
             if(requestForm.isUpdate()) return;
+            //TODO
             String[] entityCriteriaValues = {employer.getPosition(), employer.getStatus(), employer.getContractType(), null};
             if (!Arrays.asList(entityCriteriaValues).contains(requestForm.getEntityCriteriaValue())) {continue;}
             onPersist(employer, requestForm);

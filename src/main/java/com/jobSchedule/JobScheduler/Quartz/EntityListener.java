@@ -13,7 +13,7 @@ public class EntityListener {
     private static String oldPosition;
     private static String oldStatus;
     private static String oldContractType;
-
+    //TODO
     public static LocalDate getOldEndContract() {
         return oldEndContract;
     }
@@ -29,6 +29,7 @@ public class EntityListener {
 
     @PostLoad
     public void onLoad(Employer employer) {
+        //TODO
         oldPosition = employer.getPosition();
         oldStatus = employer.getStatus();
         oldContractType = employer.getContractType();
