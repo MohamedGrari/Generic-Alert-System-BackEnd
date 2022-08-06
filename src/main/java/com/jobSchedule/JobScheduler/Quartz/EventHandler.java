@@ -104,73 +104,94 @@ public class EventHandler {
 
     public void handleUpdating(Employer employer) {
         //TODO
-        String oldPosition = EntityListener.getOldPosition();
-        String oldStatus = EntityListener.getOldStatus();
-        String oldContractType = EntityListener.getOldContractType();
+        List<Object> oldAttributeValues = EntityListener.getOldAttributes();
+//        String oldPosition = EntityListener.getOldPosition();
+//        String oldStatus = EntityListener.getOldStatus();
+//        String oldContractType = EntityListener.getOldContractType();
         LocalDate oldEndContract = EntityListener.getOldEndContract();
         //TODO
-        String position = employer.getPosition();
-        String status = employer.getStatus();
-        String contractType = employer.getContractType();
-        boolean positionIsChanged = !Objects.equals(position, oldPosition);
-        boolean statusIsChanged = !Objects.equals(status, oldStatus);
-        boolean contractTypeIsChanged = !Objects.equals(contractType, oldContractType);
+        List<Object> newAttributeValues = new ArrayList<>();
+        List<String> attributes = EntityListener.getAttributes();
+        for (String attribute :attributes) {
+            newAttributeValues.add(invokeGetter(employer, attribute));
+        }
+//        String positionattribute
+//        boolean positionIsChanged = !Objects.equals(position, oldPosition);
+//        boolean statusIsChanged = !Objects.equals(status, oldStatus);
+//        boolean contractTypeIsChanged = !Objects.equals(contractType, oldContractType);
         boolean endContractIsChanged = !Objects.equals(employer.getEndContract(), oldEndContract);
         //TODO
-        if(!positionIsChanged && !statusIsChanged && !contractTypeIsChanged && !endContractIsChanged)return;
+        if(newAttributeValues == oldAttributeValues && !endContractIsChanged)return;
         for (RequestForm request : requests) {
             //TODO
             if (endContractIsChanged && Objects.equals(request.getAttribute(), "endContract")){
                     handleRequestFormUpdating(request);
             }
             //TODO
-            if (positionIsChanged || statusIsChanged || contractTypeIsChanged){
-                onUpdate(employer, request, positionIsChanged, statusIsChanged, contractTypeIsChanged);
+            if(!request.isUpdate()){continue;}
+            if (!(oldAttributeValues == newAttributeValues)){
+                onUpdate(employer, request, oldAttributeValues, newAttributeValues, attributes);
                 //TODO
-                if(positionIsChanged && Objects.equals(request.getEntityCriteria(), "position") ||
-                        statusIsChanged && Objects.equals(request.getEntityCriteria(), "status") ||
-                        contractTypeIsChanged && Objects.equals(request.getEntityCriteria(), "contractType"))
-                    handleEmployerUpdating(employer);
+//                if(positionIsChanged && Objects.equals(request.getEntityCriteria(), "position") ||
+//                        statusIsChanged && Objects.equals(request.getEntityCriteria(), "status") ||
+//                        contractTypeIsChanged && Objects.equals(request.getEntityCriteria(), "contractType"))
+//                    handleEmployerUpdating(employer);
             }
         }
     }
 
-    private void onUpdate(Employer employer, RequestForm request, boolean positionIsChanged, boolean statusIsChanged, boolean contractTypeIsChanged) {
-        if (Objects.equals(request.getDestination(), "AUTO")){request.setDestinationValue(Long.toString(employer.getId()));}
+    private void onUpdate(Employer employer, RequestForm request, List<Object> oldAttributeValues, List<Object> newAttributeValues, List<String> attributes) {
+        if (Objects.equals(request.getDestination(), "AUTO")) {
+            request.setDestinationValue(Long.toString(employer.getId()));
+        }
         String wantedAttributeValue = request.getWantedAttributeValue();
         boolean wantedAttributeValueIsWHATEVER = (Objects.equals(wantedAttributeValue, "WHATEVER"));
         scheduleRequest.setLocalDateTime(LocalDateTime.now().plusMinutes(OFFSET));
         //TODO
-        switch (request.getAttribute()) {
-            case "position":
-                if (!positionIsChanged) {return;}
-                if ((wantedAttributeValueIsWHATEVER) || (Objects.equals(wantedAttributeValue, employer.getPosition()))) {
-                    runScheduler(request, employer);}
-                break;
-            case "status":
-                if (!statusIsChanged) {return;}
-                if ((wantedAttributeValueIsWHATEVER) || (Objects.equals(wantedAttributeValue, employer.getStatus()))) {
-                    runScheduler(request, employer); }
-                break;
-            case "contractType":
-                if (!contractTypeIsChanged) {return;}
-                if ((wantedAttributeValueIsWHATEVER) || (Objects.equals(wantedAttributeValue, employer.getContractType()))) {
-                    runScheduler(request, employer);}
-                break;
-            case "WHATEVER":
-                if (!positionIsChanged && !statusIsChanged && !contractTypeIsChanged) {
-                    return;
-                }
-                runScheduler(request, employer);
-                break;
+        String value = (String) invokeGetter(employer, request.getAttribute());
+        int index = attributes.indexOf(request.getAttribute());
+        if (Objects.equals(request.getAttribute(), "WHATEVER")) {
+            runScheduler( request, employer);
+            return;
+        }
+        if (oldAttributeValues.get(index) == newAttributeValues.get(index)) {
+            return;
+        }
+        if ((wantedAttributeValueIsWHATEVER) || (Objects.equals(wantedAttributeValue, value))) {
+            runScheduler(request, employer);
+//            handleEmployerUpdating(employer);
         }
     }
+//        switch (request.getAttribute()) {
+//            case "position":
+//                if (!positionIsChanged) {return;}
+//                if ((wantedAttributeValueIsWHATEVER) || (Objects.equals(wantedAttributeValue, employer.getPosition()))) {
+//                    runScheduler(request, employer);}
+//                break;
+//            case "status":
+//                if (!statusIsChanged) {return;}
+//                if ((wantedAttributeValueIsWHATEVER) || (Objects.equals(wantedAttributeValue, employer.getStatus()))) {
+//                    runScheduler(request, employer); }
+//                break;
+//            case "contractType":
+//                if (!contractTypeIsChanged) {return;}
+//                if ((wantedAttributeValueIsWHATEVER) || (Objects.equals(wantedAttributeValue, employer.getContractType()))) {
+//                    runScheduler(request, employer);}
+//                break;
+//            case "WHATEVER":
+//                if (!positionIsChanged && !statusIsChanged && !contractTypeIsChanged) {
+//                    return;
+//                }
+//                runScheduler(request, employer);
+//                break;
+//        }
+//    }
 
     public void handlePersisting(Employer employer){
-        String[] entityCriteriaValues = {employer.getPosition(), employer.getStatus(), employer.getContractType(), null};
+//        String[] entityCriteriaValues = {employer.getPosition(), employer.getStatus(), employer.getContractType(), null};
         for (RequestForm request : requests) {
             if(request.isUpdate()) continue;
-            if (!Arrays.asList(entityCriteriaValues).contains(request.getEntityCriteriaValue())) {continue;}
+//            if (!Arrays.asList(entityCriteriaValues).contains(request.getEntityCriteriaValue())) {continue;}
             onPersist(employer, request);
         }
     }
