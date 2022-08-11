@@ -24,17 +24,13 @@ import static com.jobSchedule.JobScheduler.businessLayer.config.SubscribingConfi
 
 @Service
 public class EventHandler {
-//    @Value("${scheduler.OFFSET}")
     static final long OFFSET = 2;
-//    @Value("${scheduler.HOUR}")
-    static final int HOUR = 10;
-//    @Value("${scheduler.MINUTE}")
-    static final int MINUTE = 10;
+    static final int HOUR = 15;
+    static final int MINUTE = 33;
     private static Scheduling scheduling;
     public static Map<String, String> attributes = new HashMap<>();
     public static List<String> dateAttributes = new ArrayList<>();
     public static List<String> stringAttributes = new ArrayList<>();
-    //todo
     private static final Logger logger = LoggerFactory.getLogger(EventHandler.class);
 
     public EventHandler(AttributeConfigurationService attributeConfigurationService, Scheduling scheduling) {
@@ -95,7 +91,7 @@ public class EventHandler {
     public static void handlePersisting(Employer employer){
         for (RequestForm request : requests) {
             if(request.isUpdate()) continue;
-            if(isItMatching(employer, request)){continue;}
+            if(!isItMatching(employer, request)){continue;}
             onPersist(employer, request);
         }
     }
@@ -149,22 +145,21 @@ public class EventHandler {
                     break;
             }
         } catch (NullPointerException exception){
-            System.out.println("ERROR = " + "localDate is Null" + exception.getMessage());
+            System.out.println("ERROR = localDate is Null : " + exception.getMessage());
         }
     }
     public static void handleRequestFormPersisting(RequestForm requestForm){
         if(requestForm.isUpdate()) return;
 //        List<Employer> employers = EventHandler.employerService.findAllEmployer();
         for (Employer employer : employers) {
-            String[] entityCriteriaValues = {employer.getPosition(), employer.getStatus(), employer.getContractType(), null};
-            if (!Arrays.asList(entityCriteriaValues).contains(requestForm.getEntityCriteriaValue())) {continue;}
+            if (!isItMatching(employer, requestForm)){continue;}
             onPersist(employer, requestForm);
         }
     }
     public static void handleEmployerPersisting(Employer employer, List<RequestForm> requests){
         for (RequestForm requestForm : requests) {
             if(requestForm.isUpdate()) return;
-            if (isItMatching(employer, requestForm)) continue;
+            if (!isItMatching(employer, requestForm)) continue;
             onPersist(employer, requestForm);
         }
     }
@@ -174,7 +169,7 @@ public class EventHandler {
             entityCriteriaValues.add((String) invokeGetter(employer, stringAttribute));
         }
         entityCriteriaValues.add(null);
-        return !entityCriteriaValues.contains(requestForm.getEntityCriteriaValue());
+        return entityCriteriaValues.contains(requestForm.getEntityCriteriaValue());
     }
     private static void runScheduler(RequestForm request, Employer employer, ScheduleRequest scheduleRequest) {
         scheduleRequest.setJobText(request.getText());
@@ -184,17 +179,15 @@ public class EventHandler {
         scheduleRequest.setRequestFormId(request.getId());
         scheduleRequest.setEmployerId(employer.getId());
         ScheduleResponse scheduleResponse = scheduling.createSchedule(scheduleRequest);
-        logger.info("IT'S WORKING");
+        logger.info("SCHEDULED!");
         System.out.println("request = " + request);
         System.out.println("employer = " + employer);
         System.out.println("scheduling = " + scheduleResponse);
-        }
-    //todo
+    }
     public static void handleRequestFormUpdating(RequestForm requestForm) {
         handleRequestFormDeleting(requestForm);
         handleRequestFormPersisting(requestForm);
     }
-    //todo
     public static void handleRequestFormDeleting(RequestForm requestForm) {
         List<ScheduleResponse> scheduleResponses = scheduling.getAllJobs();
         for (ScheduleResponse scheduleResponse : scheduleResponses) {
@@ -222,7 +215,6 @@ public class EventHandler {
             PropertyDescriptor pd = new PropertyDescriptor(variableName, obj.getClass());
             Method getter = pd.getReadMethod();
             Object f = getter.invoke(obj);
-            System.out.println(f);
             return f;
         } catch (IllegalAccessException | IllegalArgumentException | InvocationTargetException |
                  IntrospectionException e) {

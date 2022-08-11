@@ -23,7 +23,6 @@ public class EmployerService {
     public Employer saveEmployer(Employer employer){
         return employerRepo.save(employer);
     }
-    public List<Employer> findEmployerByPosition(String position){ return employerRepo.findEmployersByPosition(position);}
     public Employer updateEmployer(Employer employer) {
         return employerRepo.save(employer);
     }

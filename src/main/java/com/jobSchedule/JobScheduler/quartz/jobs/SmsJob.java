@@ -1,5 +1,6 @@
 package com.jobSchedule.JobScheduler.quartz.jobs;
 
+import com.jobSchedule.JobScheduler.businessLayer.EventHandler;
 import com.jobSchedule.JobScheduler.web.model.Employer;
 import com.jobSchedule.JobScheduler.web.service.EmployerService;
 import com.twilio.Twilio;
@@ -11,6 +12,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.scheduling.quartz.QuartzJobBean;
 import java.util.List;
+import java.util.Objects;
 
 public class SmsJob extends QuartzJobBean {
     private static final String ACCOUNT_SID = "ACa70269fa83571dd0bfb400dd1f5ec734";
@@ -27,26 +29,27 @@ public class SmsJob extends QuartzJobBean {
         String jobDestinationValue = jobDataMap.getString("destinationValue");
         Twilio.init(ACCOUNT_SID, AUTH_TOKEN);
         logger.info("Executing Job with key : " + context.getJobDetail().getKey());
-        switch (jobDestination){
-            case "position":
-            case "status":
-            case "contractType":
-                employers = employerService.findEmployerByPosition(jobDestinationValue);
-                for(Employer employer : employers){
+        if (EventHandler.stringAttributes.contains(jobDestination)) {
+            employers = employerService.findAllEmployer();
+            for (Employer employer : employers) {
+                if (Objects.equals((String) EventHandler.invokeGetter(employer, jobDestination), jobDestinationValue)){
                     sendSMS(employer, msgBody);
                 }
-                break;
-            case "ALL":
-                employers = employerService.findAllEmployer();
-                for(Employer employer : employers){
+            }
+        } else {
+            switch (jobDestination) {
+                case "ALL":
+                    employers = employerService.findAllEmployer();
+                    for (Employer employer : employers) {
+                        sendSMS(employer, msgBody);
+                    }
+                    break;
+                case "AUTO":
+                case "ONE":
+                    Employer employer = employerService.findEmployerById(Long.parseLong(jobDestinationValue)).get();
                     sendSMS(employer, msgBody);
-                }
-                break;
-            case "AUTO":
-            case "ONE":
-                Employer employer = employerService.findEmployerById(Long.parseLong(jobDestinationValue)).get();
-                sendSMS(employer, msgBody);
-                break;
+                    break;
+            }
         }
     }
 

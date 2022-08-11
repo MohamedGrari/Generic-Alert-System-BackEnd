@@ -12,6 +12,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.stereotype.Component;
+
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
@@ -51,8 +53,8 @@ public class Scheduling {
             }
             Trigger trigger = buildJobTrigger(jobDetail, dateTime, scheduleRequest.isRepeated());
             assert jobDetail != null;
-            ScheduleResponse scheduleResponse = new ScheduleResponse(true, jobDetail.getKey().getName(),
-                    jobDetail.getKey().getGroup(), "Scheduled Successfully!", trigger.getNextFireTime(),
+            ScheduleResponse scheduleResponse = new ScheduleResponse(true, "Scheduled Successfully!", LocalDate.now(), jobDetail.getKey().getName(),
+                    jobDetail.getKey().getGroup(), trigger.getNextFireTime(),
                     scheduleRequest.getEmployerId(), scheduleRequest.getRequestFormId());
             jobDetail.getJobDataMap().put(jobDetail.getKey().getName(), scheduleResponse);
             scheduler.scheduleJob(jobDetail, trigger);
@@ -117,11 +119,14 @@ public class Scheduling {
     public List<ScheduleResponse> getAllJobs(){
         try {
             List<ScheduleResponse> scheduleResponses = new ArrayList<>();
-            Set<JobKey> jobKeys =  scheduler.getJobKeys(GroupMatcher.anyGroup());
-            for (JobKey jobKey : jobKeys){
+            for (JobKey jobKey : scheduler.getJobKeys(GroupMatcher.anyGroup())){
                 try {
                     JobDetail jobDetail = scheduler.getJobDetail(jobKey);
                     ScheduleResponse scheduleResponse = (ScheduleResponse) jobDetail.getJobDataMap().get(jobKey.getName());
+                    List<Trigger> triggers = (List<Trigger>) scheduler.getTriggersOfJob(jobKey);
+                    if (!triggers.isEmpty()) {
+                        scheduleResponse.setAlertTime(triggers.get(0).getNextFireTime());
+                    }
                     scheduleResponses.add(scheduleResponse);
                 } catch (SchedulerException e){
                     logger.error(e.getMessage(), e);
@@ -136,7 +141,12 @@ public class Scheduling {
     public ScheduleResponse getOneJob(String jobGroup, String jobKey){
         try {
             JobDetail jobDetail = scheduler.getJobDetail(new JobKey(jobKey, jobGroup));
-            return (ScheduleResponse) jobDetail.getJobDataMap().get(jobKey);
+            ScheduleResponse scheduleResponse = (ScheduleResponse) jobDetail.getJobDataMap().get(jobKey);
+            List<Trigger> triggers = (List<Trigger>) scheduler.getTriggersOfJob(JobKey.jobKey(jobKey));
+            if (!triggers.isEmpty()) {
+                scheduleResponse.setAlertTime(triggers.get(0).getNextFireTime());
+            }
+            return scheduleResponse;
         } catch (SchedulerException | NullPointerException e) {
             logger.error(e.getMessage());
             return null;
