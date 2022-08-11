@@ -4,8 +4,8 @@ import com.jobSchedule.JobScheduler.web.model.AttributeConfiguration;
 import com.jobSchedule.JobScheduler.web.service.AttributeConfigurationService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RestController;
-
 import java.util.List;
 
 @RestController
@@ -14,6 +14,10 @@ public class AttributeConfigurationController {
     private AttributeConfigurationService attributeConfigurationService;
     @GetMapping("/attributes")
     public List<AttributeConfiguration> getAttributeConfigurations(){
-        return attributeConfigurationService.findAllAttributeConfiguration();
+        return attributeConfigurationService.findAllAttributes();
+    }
+    @PostMapping("/saveAttribute")
+    public AttributeConfiguration saveAttribute(AttributeConfiguration attribute){
+        return attributeConfigurationService.addAttribute(attribute);
     }
 }

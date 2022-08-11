@@ -14,8 +14,11 @@ public class AttributeConfigurationService {
     public AttributeConfigurationService(AttributeConfigurationRepo repo){
         this.repo = repo;
     }
-    public List<AttributeConfiguration> findAllAttributeConfiguration(){
+    public List<AttributeConfiguration> findAllAttributes(){
         return repo.findAll();
+    }
+    public AttributeConfiguration addAttribute(AttributeConfiguration attribute){
+        return repo.save(attribute);
     }
 
 }

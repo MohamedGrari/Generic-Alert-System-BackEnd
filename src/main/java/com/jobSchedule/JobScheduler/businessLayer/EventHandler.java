@@ -35,7 +35,7 @@ public class EventHandler {
 
     public EventHandler(AttributeConfigurationService attributeConfigurationService, Scheduling scheduling) {
         EventHandler.scheduling = scheduling;
-        List<AttributeConfiguration> attributeConfigurations = attributeConfigurationService.findAllAttributeConfiguration();
+        List<AttributeConfiguration> attributeConfigurations = attributeConfigurationService.findAllAttributes();
         for (AttributeConfiguration attributeConfiguration : attributeConfigurations){
             attributes.put(attributeConfiguration.getAttributeName(), attributeConfiguration.getAttributeType());
             if (Objects.equals(attributeConfiguration.getAttributeType(), "String")){
