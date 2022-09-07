@@ -7,6 +7,8 @@ import com.jobSchedule.JobScheduler.web.model.AttributeConfiguration;
 import com.jobSchedule.JobScheduler.web.model.Employer;
 import com.jobSchedule.JobScheduler.web.model.RequestForm;
 import com.jobSchedule.JobScheduler.web.service.AttributeConfigurationService;
+import com.jobSchedule.JobScheduler.web.service.EmployerService;
+import com.jobSchedule.JobScheduler.web.service.RequestFormService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
@@ -19,8 +21,6 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.*;
 
-import static com.jobSchedule.JobScheduler.businessLayer.config.SubscribingConfig.employers;
-import static com.jobSchedule.JobScheduler.businessLayer.config.SubscribingConfig.requests;
 
 @Service
 public class EventHandler {
@@ -33,7 +33,7 @@ public class EventHandler {
     public static List<String> stringAttributes = new ArrayList<>();
     private static final Logger logger = LoggerFactory.getLogger(EventHandler.class);
 
-    public EventHandler(AttributeConfigurationService attributeConfigurationService, Scheduling scheduling) {
+    public EventHandler(AttributeConfigurationService attributeConfigurationService, Scheduling scheduling, RequestFormService requestFormService, EmployerService employerService) {
         EventHandler.scheduling = scheduling;
         List<AttributeConfiguration> attributeConfigurations = attributeConfigurationService.findAllAttributes();
         for (AttributeConfiguration attributeConfiguration : attributeConfigurations){
@@ -44,7 +44,42 @@ public class EventHandler {
                 dateAttributes.add(attributeConfiguration.getAttributeName());
             }
         }
+        List<RequestForm> requests = requestFormService.findByEntity("employer");
+        List<Employer> employers = employerService.findAllEmployer();
+        for( RequestForm request : requests){subscribe(request);}
+        for( Employer employer : employers){subscribe(employer);}
     }
+
+    public static final List<RequestForm> requests = new ArrayList<>();
+    public static final List<Employer> employers = new ArrayList<>();
+
+    public static void subscribe(Employer employer){
+        employers.add(employer);
+    }
+    public static void subscribe(RequestForm requestForm){
+        requests.add(requestForm);
+    }
+    public static void unSubscribe(RequestForm requestForm){
+        requests.removeIf(requestForm1 -> Objects.equals(requestForm1.getId(), requestForm.getId()));
+    }
+    public static void unSubscribe(Employer employer){
+        employers.removeIf(employer1 -> Objects.equals(employer1.getId(), employer.getId()));
+    }
+    public static void updateSubscriber(RequestForm requestForm){
+        for(RequestForm requestForm1 : requests){
+            if (Objects.equals(requestForm1.getId(), requestForm.getId())){
+                requests.set(requests.indexOf(requestForm1), requestForm);
+            }
+        }
+    }
+    public static void updateSubscriber(Employer employer){
+        for(Employer employer1 : employers){
+            if (Objects.equals(employer1.getId(), employer.getId())){
+                employers.set(employers.indexOf(employer1), employer);
+            }
+        }
+    }
+
     public static void handleUpdating(Employer employer) {
         List<String> newStringAttributeValues = new ArrayList<>();
         List<LocalDate> newDateAttributeValues = new ArrayList<>();
@@ -98,7 +133,6 @@ public class EventHandler {
     private static void onPersist(Employer employer, RequestForm request) {
         ScheduleRequest scheduleRequest = new ScheduleRequest();
         LocalDate localDate = (LocalDate)invokeGetter(employer, request.getAttribute());
-        if (Objects.equals(request.getDestination(), "AUTO")){request.setDestinationValue(Long.toString(employer.getId()));}
         if (Objects.equals(request.getAttribute(), "birthday") || Objects.equals(request.getAttribute(), "hireDate")){
             scheduleRequest.setRepeated(true);
         }
@@ -176,8 +210,12 @@ public class EventHandler {
     private static void runScheduler(RequestForm request, Employer employer, ScheduleRequest scheduleRequest) {
         scheduleRequest.setJobText(request.getText());
         scheduleRequest.setJobAlertMode(request.getAlertMode());
+        if (Objects.equals(request.getDestination(), "AUTO")) {
+            scheduleRequest.setJobDestinationValue(Long.toString(employer.getId()));
+        } else {
+            scheduleRequest.setJobDestinationValue(request.getDestinationValue());
+        }
         scheduleRequest.setJobDestination(request.getDestination());
-        scheduleRequest.setJobDestinationValue(request.getDestinationValue());
         scheduleRequest.setRequestFormId(request.getId());
         scheduleRequest.setEmployerId(employer.getId());
         ScheduleResponse scheduleResponse = scheduling.createSchedule(scheduleRequest);

@@ -1,7 +1,7 @@
 package com.jobSchedule.JobScheduler.web.model;
 
 import com.jobSchedule.JobScheduler.businessLayer.EventHandler;
-import com.jobSchedule.JobScheduler.businessLayer.config.SubscribingConfig;
+import jdk.jfr.Event;
 import lombok.*;
 import javax.persistence.*;
 import java.util.Objects;
@@ -31,7 +31,7 @@ public class RequestForm {
     @PostPersist
     private void onPersist(){
         if (Objects.equals(entity, "employer")){
-            SubscribingConfig.subscribe(this);
+            EventHandler.subscribe(this);
         }
 //        EventHandler eventHandler = ApplicationContextHolder.getContext().getBean(EventHandler.class);
         EventHandler.handleRequestFormPersisting(this);
@@ -39,14 +39,14 @@ public class RequestForm {
 
     @PreUpdate
     private void onUpdate(){
-        SubscribingConfig.updateSubscriber(this);
+        EventHandler.updateSubscriber(this);
 //        EventHandler eventHandler = ApplicationContextHolder.getContext().getBean(EventHandler.class);
         EventHandler.handleRequestFormUpdating(this);
     }
     @PreRemove
     private void onRemove(){
         if (Objects.equals(this.getEntity(), "employer")){
-            SubscribingConfig.unSubscribe(this);
+            EventHandler.unSubscribe(this);
         }
 //        EventHandler eventHandler = ApplicationContextHolder.getContext().getBean(EventHandler.class);
         EventHandler.handleRequestFormDeleting(this);

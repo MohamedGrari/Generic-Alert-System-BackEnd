@@ -1,6 +1,5 @@
 package com.jobSchedule.JobScheduler.businessLayer;
 
-import com.jobSchedule.JobScheduler.businessLayer.config.SubscribingConfig;
 import com.jobSchedule.JobScheduler.web.model.Employer;
 import lombok.NoArgsConstructor;
 import org.springframework.stereotype.Component;
@@ -28,19 +27,19 @@ public class EmployerListener {
     }
     @PostPersist
     public void onPersist(Employer employer){
-        SubscribingConfig.subscribe(employer);
+        EventHandler.subscribe(employer);
 //        EventHandler eventHandler = ApplicationContextHolder.getContext().getBean(EventHandler.class);
         EventHandler.handlePersisting(employer);
     }
     @PreUpdate
     public void onUpdate(Employer employer){
-        SubscribingConfig.updateSubscriber(employer);
+        EventHandler.updateSubscriber(employer);
 //        EventHandler eventHandler = ApplicationContextHolder.getContext().getBean(EventHandler.class);
         EventHandler.handleUpdating(employer);
     }
     @PreRemove
     public void onRemove(Employer employer){
-        SubscribingConfig.unSubscribe(employer);
+        EventHandler.unSubscribe(employer);
 //        EventHandler eventHandler = ApplicationContextHolder.getContext().getBean(EventHandler.class);
         EventHandler.handleEmployerDeleting(employer);
     }
