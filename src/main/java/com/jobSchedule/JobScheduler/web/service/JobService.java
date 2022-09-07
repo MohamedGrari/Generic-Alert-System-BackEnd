@@ -15,6 +15,9 @@ public class JobService {
     public List<ScheduleResponse> getAllJobs(){
         return scheduling.getAllJobs();
     }
+    public void deleteJob(String jobGroup, String jobKey){
+        scheduling.deleteJob(jobGroup, jobKey);
+    }
     public ScheduleResponse getOneJob(String jobGroup, String jobKey) {
         return scheduling.getOneJob(jobGroup, jobKey);
     }

@@ -19,17 +19,20 @@ public class EmployerController {
     private ModelMapper modelMapper;
     @Autowired
     EmployerService employerService;
+    @CrossOrigin(origins = "http://localhost:4200")
     @GetMapping("/employers")
     public List<EmployerDto> getEmployers(){
         //return employerService.findAllEmployer();
         return employerService.findAllEmployer().stream().map(post -> modelMapper.map(post, EmployerDto.class))
                 .collect(Collectors.toList());
     }
+    @CrossOrigin(origins = "http://localhost:4200")
     @GetMapping("/employer/{id}")
     public Optional<EmployerDto> getEmployerById(@PathVariable("id") Long id){
         Optional<Employer> employer = employerService.findEmployerById(id);
         return modelMapper.map(employer, (Type) EmployerDto.class);
     }
+    @CrossOrigin(origins = "http://localhost:4200")
     @PostMapping("/saveEmployer")
     public EmployerDto saveEmployer (@Valid @RequestBody EmployerDto employerDto){
         //return employerService.saveEmployer(employer);
@@ -37,13 +40,15 @@ public class EmployerController {
         Employer employer = employerService.saveEmployer(employerRequest);
         return modelMapper.map(employer, EmployerDto.class);
     }
+    @CrossOrigin(origins = "http://localhost:4200")
     @PutMapping("/updateEmployer")
     public EmployerDto updateEmployer(@RequestBody EmployerDto employerDto) throws Exception {
         Employer employerRequest = modelMapper.map(employerDto, Employer.class);
         Employer employerResponse = employerService.updateEmployer(employerRequest);
         return modelMapper.map(employerResponse, EmployerDto.class);
     }
-    @DeleteMapping("/delete")
+    @CrossOrigin(origins = "http://localhost:4200")
+    @DeleteMapping("/deleteEmployer")
     public void deleteEmployer(@Valid @RequestBody EmployerDto employerDto){
         //employerService.deleteEmployer(employer);
         Employer employerRequest = modelMapper.map(employerDto, Employer.class);

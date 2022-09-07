@@ -169,6 +169,8 @@ public class EventHandler {
             entityCriteriaValues.add((String) invokeGetter(employer, stringAttribute));
         }
         entityCriteriaValues.add(null);
+        entityCriteriaValues.add("");
+        entityCriteriaValues.add(String.valueOf(employer.getId()));
         return entityCriteriaValues.contains(requestForm.getEntityCriteriaValue());
     }
     private static void runScheduler(RequestForm request, Employer employer, ScheduleRequest scheduleRequest) {
