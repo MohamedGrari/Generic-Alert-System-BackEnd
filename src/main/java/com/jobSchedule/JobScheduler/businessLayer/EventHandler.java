@@ -91,13 +91,18 @@ public class EventHandler {
         }
         if (!newStringAttributeValues.equals(EmployerListener.oldStringAttributeValues)) {
             handleEmployerUpdating(employer, requests);
-            List<String> entityCriteriaValues = newStringAttributeValues;
-            entityCriteriaValues.add(null);
+//            List<String> entityCriteriaValues = new ArrayList<>();
+//            for (String el : newStringAttributeValues){
+//                entityCriteriaValues.add(el);
+//            }
+//            List<String> entityCriteriaValues = newStringAttributeValues;
+            newStringAttributeValues.add(null);
+            newStringAttributeValues.add("");
             for (RequestForm requestForm : requests) {
                 if (!requestForm.isUpdate()) {continue;}
-                if (!entityCriteriaValues.contains(requestForm.getEntityCriteriaValue())) {continue;}
-                onUpdate(employer, requestForm, newStringAttributeValues);
-                return;
+                if ((newStringAttributeValues.contains(requestForm.getEntityCriteriaValue())) || (Objects.equals(requestForm.getEntityCriteria(), requestForm.getAttribute()) && EmployerListener.oldStringAttributeValues.contains(requestForm.getEntityCriteriaValue()))) {
+                    onUpdate(employer, requestForm, newStringAttributeValues);
+                }
             }
         } else if (!newDateAttributeValues.equals(EmployerListener.oldDateAttributeValues)) {
             handleEmployerUpdating(employer, requests);
